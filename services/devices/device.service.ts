@@ -405,10 +405,15 @@ export class DeviceService {
       }),
     ]);
 
-    return [
+    const combined = [
       ...sweetSpotResult.items.map((d) => enhanceDeviceWithImageUrl(d)),
       ...midResult.items.map((d) => enhanceDeviceWithImageUrl(d)),
     ];
+
+    // Prevent duplicates (can happen if a device matches both buckets)
+    return combined.filter(
+      (device, i, arr) => arr.findIndex((d) => d.id === device.id) === i,
+    );
   }
 
   public async getTagBySlug(tagSlug: string): Promise<TagModel | null> {

@@ -161,7 +161,7 @@ export default function HomePage() {
             const isLeftColumn = index % 2 === 0;
             return (
               <View
-                key={device.id}
+                key={`${title}:${device.id}:${index}`}
                 style={[
                   styles.cardWrapper,
                   {
