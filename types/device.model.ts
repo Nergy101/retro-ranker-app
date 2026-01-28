@@ -128,11 +128,13 @@ export interface DeviceScreen {
     isTouchscreen?: boolean;
     isPenCapable?: boolean;
   } | null;
-  resolution?: Array<{
-    raw: string;
-    width: number;
-    height: number;
-  }> | null;
+  resolution?:
+    | Array<{
+      raw: string;
+      width: number;
+      height: number;
+    }>
+    | null;
   aspectRatio?: string | null;
   refreshRate?: string;
   ppi?: number[] | null;

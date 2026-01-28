@@ -2,8 +2,7 @@
  * App-wide constants
  */
 
-export const POCKETBASE_URL =
-  process.env.EXPO_PUBLIC_POCKETBASE_URL ||
+export const POCKETBASE_URL = process.env.EXPO_PUBLIC_POCKETBASE_URL ||
   "https://pocketbase.retroranker.site";
 
 export const CACHE_DURATION_MS = 30 * 60 * 1000; // 30 minutes

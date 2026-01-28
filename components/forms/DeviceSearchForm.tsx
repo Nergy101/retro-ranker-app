@@ -1,57 +1,61 @@
-import React, { useState, useEffect } from 'react';
-import { Box, VStack, HStack, Button, Text, Pressable } from 'native-base';
-import { colors } from '../../theme/colors';
+import React, { useEffect, useState } from "react";
+import { Box, Button, HStack, Pressable, Text, VStack } from "native-base";
+import { colors } from "../../theme/colors";
 
 interface DeviceSearchFormProps {
-  initialCategory?: 'all' | 'low' | 'mid' | 'high';
+  initialCategory?: "all" | "low" | "mid" | "high";
   initialSort?: string;
-  initialFilter?: 'all' | 'upcoming' | 'personal-picks';
+  initialFilter?: "all" | "upcoming" | "personal-picks";
   onSearch: (params: {
     query: string;
-    category: 'all' | 'low' | 'mid' | 'high';
+    category: "all" | "low" | "mid" | "high";
     sortBy: string;
-    filter: 'all' | 'upcoming' | 'personal-picks';
+    filter: "all" | "upcoming" | "personal-picks";
   }) => void;
 }
 
 const sortOptions = [
-  { label: 'New Arrivals', value: 'new-arrivals' },
-  { label: 'Highly Ranked', value: 'highly-ranked' },
-  { label: 'Price: Low to High', value: 'low-high-price' },
-  { label: 'Price: High to Low', value: 'high-low-price' },
-  { label: 'Alphabetical', value: 'alphabetical' },
+  { label: "New Arrivals", value: "new-arrivals" },
+  { label: "Highly Ranked", value: "highly-ranked" },
+  { label: "Price: Low to High", value: "low-high-price" },
+  { label: "Price: High to Low", value: "high-low-price" },
+  { label: "Alphabetical", value: "alphabetical" },
 ];
 
 const filterOptions = [
-  { label: 'All Devices', value: 'all' },
-  { label: 'Upcoming', value: 'upcoming' },
-  { label: 'Personal Picks', value: 'personal-picks' },
+  { label: "All Devices", value: "all" },
+  { label: "Upcoming", value: "upcoming" },
+  { label: "Personal Picks", value: "personal-picks" },
 ];
 
 export function DeviceSearchForm({
-  initialCategory = 'all',
-  initialSort = 'all',
-  initialFilter = 'all',
+  initialCategory = "all",
+  initialSort = "all",
+  initialFilter = "all",
   onSearch,
 }: DeviceSearchFormProps) {
-  const [category, setCategory] = useState<'all' | 'low' | 'mid' | 'high'>(initialCategory);
+  const [category, setCategory] = useState<"all" | "low" | "mid" | "high">(
+    initialCategory,
+  );
   const [sortBy, setSortBy] = useState(initialSort);
-  const [filter, setFilter] = useState<'all' | 'upcoming' | 'personal-picks'>(initialFilter);
+  const [filter, setFilter] = useState<"all" | "upcoming" | "personal-picks">(
+    initialFilter,
+  );
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Auto-trigger search when any filter changes
   useEffect(() => {
-    onSearch({ query: '', category, sortBy, filter });
+    onSearch({ query: "", category, sortBy, filter });
   }, [category, sortBy, filter]);
 
   const getSortLabel = () => {
-    return sortOptions.find(opt => opt.value === sortBy)?.label || 'Sort By';
+    return sortOptions.find((opt) => opt.value === sortBy)?.label || "Sort By";
   };
 
   const getFilterLabel = () => {
-    return filterOptions.find(opt => opt.value === filter)?.label || 'Filter';
+    return filterOptions.find((opt) => opt.value === filter)?.label || "Filter";
   };
 
   return (
@@ -67,11 +71,15 @@ export function DeviceSearchForm({
           p={3}
         >
           <HStack justifyContent="space-between" alignItems="center">
-            <Text color={colors.textPrimary} fontSize="sm" fontWeight="semibold">
-              Filters
+            <Text
+              color={colors.textPrimary}
+              fontSize="sm"
+              fontWeight="semibold"
+            >
+              More Filters
             </Text>
             <Text color={colors.primary} fontSize="sm">
-              {isExpanded ? '▲' : '▼'}
+              {isExpanded ? "▲" : "▼"}
             </Text>
           </HStack>
         </Pressable>
@@ -88,48 +96,68 @@ export function DeviceSearchForm({
                 <Button
                   flex={1}
                   size="sm"
-                  variant={category === 'all' ? 'solid' : 'outline'}
-                  bg={category === 'all' ? colors.primary : 'transparent'}
+                  variant={category === "all" ? "solid" : "outline"}
+                  bg={category === "all" ? colors.primary : "transparent"}
                   borderColor={colors.primary}
-                  onPress={() => setCategory('all')}
+                  onPress={() => setCategory("all")}
                 >
-                  <Text color={category === 'all' ? colors.primaryContrast : colors.primary} fontSize="sm">
+                  <Text
+                    color={category === "all"
+                      ? colors.primaryContrast
+                      : colors.primary}
+                    fontSize="sm"
+                  >
                     All
                   </Text>
                 </Button>
                 <Button
                   flex={1}
                   size="sm"
-                  variant={category === 'low' ? 'solid' : 'outline'}
-                  bg={category === 'low' ? colors.success : 'transparent'}
+                  variant={category === "low" ? "solid" : "outline"}
+                  bg={category === "low" ? colors.success : "transparent"}
                   borderColor={colors.success}
-                  onPress={() => setCategory('low')}
+                  onPress={() => setCategory("low")}
                 >
-                  <Text color={category === 'low' ? colors.textPrimary : colors.success} fontSize="sm">
+                  <Text
+                    color={category === "low"
+                      ? colors.textPrimary
+                      : colors.success}
+                    fontSize="sm"
+                  >
                     $
                   </Text>
                 </Button>
                 <Button
                   flex={1}
                   size="sm"
-                  variant={category === 'mid' ? 'solid' : 'outline'}
-                  bg={category === 'mid' ? colors.primary : 'transparent'}
+                  variant={category === "mid" ? "solid" : "outline"}
+                  bg={category === "mid" ? colors.primary : "transparent"}
                   borderColor={colors.primary}
-                  onPress={() => setCategory('mid')}
+                  onPress={() => setCategory("mid")}
                 >
-                  <Text color={category === 'mid' ? colors.primaryContrast : colors.primary} fontSize="sm">
+                  <Text
+                    color={category === "mid"
+                      ? colors.primaryContrast
+                      : colors.primary}
+                    fontSize="sm"
+                  >
                     $$
                   </Text>
                 </Button>
                 <Button
                   flex={1}
                   size="sm"
-                  variant={category === 'high' ? 'solid' : 'outline'}
-                  bg={category === 'high' ? colors.error : 'transparent'}
+                  variant={category === "high" ? "solid" : "outline"}
+                  bg={category === "high" ? colors.error : "transparent"}
                   borderColor={colors.error}
-                  onPress={() => setCategory('high')}
+                  onPress={() => setCategory("high")}
                 >
-                  <Text color={category === 'high' ? colors.textPrimary : colors.error} fontSize="sm">
+                  <Text
+                    color={category === "high"
+                      ? colors.textPrimary
+                      : colors.error}
+                    fontSize="sm"
+                  >
                     $$$
                   </Text>
                 </Button>
@@ -159,7 +187,13 @@ export function DeviceSearchForm({
                 </HStack>
               </Pressable>
               {showSortMenu && (
-                <Box mt={2} bg={colors.backgroundElevated} borderRadius="md" borderWidth={1} borderColor={colors.border}>
+                <Box
+                  mt={2}
+                  bg={colors.backgroundElevated}
+                  borderRadius="md"
+                  borderWidth={1}
+                  borderColor={colors.border}
+                >
                   <VStack>
                     {sortOptions.map((option) => (
                       <Pressable
@@ -169,13 +203,20 @@ export function DeviceSearchForm({
                           setShowSortMenu(false);
                         }}
                         p={3}
-                        borderBottomWidth={sortOptions.indexOf(option) < sortOptions.length - 1 ? 1 : 0}
+                        borderBottomWidth={sortOptions.indexOf(option) <
+                            sortOptions.length - 1
+                          ? 1
+                          : 0}
                         borderBottomColor={colors.border}
                       >
                         <Text
-                          color={sortBy === option.value ? colors.primary : colors.textPrimary}
+                          color={sortBy === option.value
+                            ? colors.primary
+                            : colors.textPrimary}
                           fontSize="sm"
-                          fontWeight={sortBy === option.value ? 'bold' : 'normal'}
+                          fontWeight={sortBy === option.value
+                            ? "bold"
+                            : "normal"}
                         >
                           {option.label}
                         </Text>
@@ -209,7 +250,13 @@ export function DeviceSearchForm({
                 </HStack>
               </Pressable>
               {showFilterMenu && (
-                <Box mt={2} bg={colors.backgroundElevated} borderRadius="md" borderWidth={1} borderColor={colors.border}>
+                <Box
+                  mt={2}
+                  bg={colors.backgroundElevated}
+                  borderRadius="md"
+                  borderWidth={1}
+                  borderColor={colors.border}
+                >
                   <VStack>
                     {filterOptions.map((option) => (
                       <Pressable
@@ -219,13 +266,20 @@ export function DeviceSearchForm({
                           setShowFilterMenu(false);
                         }}
                         p={3}
-                        borderBottomWidth={filterOptions.indexOf(option) < filterOptions.length - 1 ? 1 : 0}
+                        borderBottomWidth={filterOptions.indexOf(option) <
+                            filterOptions.length - 1
+                          ? 1
+                          : 0}
                         borderBottomColor={colors.border}
                       >
                         <Text
-                          color={filter === option.value ? colors.primary : colors.textPrimary}
+                          color={filter === option.value
+                            ? colors.primary
+                            : colors.textPrimary}
                           fontSize="sm"
-                          fontWeight={filter === option.value ? 'bold' : 'normal'}
+                          fontWeight={filter === option.value
+                            ? "bold"
+                            : "normal"}
                         >
                           {option.label}
                         </Text>

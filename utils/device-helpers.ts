@@ -1,4 +1,4 @@
-import { Device, SystemRating, EmulationSystem } from "../types/device.model";
+import { Device, EmulationSystem, SystemRating } from "../types/device.model";
 
 // Emulation system difficulty order (higher number = more difficult)
 const EmulationSystemOrder: Record<EmulationSystem, number> = {
@@ -51,7 +51,7 @@ export function getUptoSystemA(device: Device): SystemRating | null {
   const mostDifficultSystem = aRatings.reduce((prev, current) =>
     EmulationSystemOrder[prev.system] > EmulationSystemOrder[current.system]
       ? prev
-      : current,
+      : current
   );
 
   return mostDifficultSystem;
@@ -77,7 +77,7 @@ export function getUptoSystemCOrLower(device: Device): SystemRating | null {
       return matchingRatings.reduce((prev, current) =>
         EmulationSystemOrder[prev.system] > EmulationSystemOrder[current.system]
           ? prev
-          : current,
+          : current
       );
     }
   }

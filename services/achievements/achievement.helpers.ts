@@ -226,10 +226,9 @@ function buildProgressLabel(
   threshold: number,
   unlocked: boolean,
 ): string {
-  const unit =
-    threshold === 1
-      ? METRIC_LABELS[metric].singular
-      : METRIC_LABELS[metric].plural;
+  const unit = threshold === 1
+    ? METRIC_LABELS[metric].singular
+    : METRIC_LABELS[metric].plural;
   const displayedValue = unlocked ? threshold : Math.min(value, threshold);
   return `${displayedValue} / ${threshold} ${unit}`;
 }
@@ -289,13 +288,10 @@ export function buildAchievementBoard(
     const progressValue = unlocked
       ? definition.threshold
       : Math.min(currentValue, definition.threshold);
-    const progressPercentage =
-      definition.threshold === 0
-        ? 100
-        : Math.min(
-            100,
-            Math.round((progressValue / definition.threshold) * 100),
-          );
+    const progressPercentage = definition.threshold === 0 ? 100 : Math.min(
+      100,
+      Math.round((progressValue / definition.threshold) * 100),
+    );
     const remaining = Math.max(0, definition.threshold - currentValue);
     const statusText = unlocked
       ? (definition.unlockedMessage ?? "Unlocked!")

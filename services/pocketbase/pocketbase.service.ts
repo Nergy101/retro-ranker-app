@@ -5,8 +5,7 @@ import PocketBase, {
 } from "pocketbase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const POCKETBASE_URL =
-  process.env.EXPO_PUBLIC_POCKETBASE_URL ||
+const POCKETBASE_URL = process.env.EXPO_PUBLIC_POCKETBASE_URL ||
   "https://pocketbase.retroranker.site";
 
 /**

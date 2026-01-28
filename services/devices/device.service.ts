@@ -5,8 +5,7 @@ import {
 import { Device } from "../../types/device.model";
 import { TagModel } from "../../types/tag.model";
 
-const POCKETBASE_URL =
-  process.env.EXPO_PUBLIC_POCKETBASE_URL ||
+const POCKETBASE_URL = process.env.EXPO_PUBLIC_POCKETBASE_URL ||
   "https://pocketbase.retroranker.site";
 
 const personalPicks: string[] = [
@@ -138,7 +137,8 @@ export class DeviceService {
     // Add search query filter
     if (query) {
       if (filterString) filterString += " && ";
-      filterString += `(deviceData.name.sanitized ~ "${lowerQuery}" || deviceData.name.raw ~ "${lowerQuery}" || deviceData.brand.raw ~ "${lowerQuery}" || deviceData.os.raw ~ "${lowerQuery}")`;
+      filterString +=
+        `(deviceData.name.sanitized ~ "${lowerQuery}" || deviceData.name.raw ~ "${lowerQuery}" || deviceData.brand.raw ~ "${lowerQuery}" || deviceData.os.raw ~ "${lowerQuery}")`;
     }
 
     // Add filter for upcoming devices
@@ -213,7 +213,8 @@ export class DeviceService {
     if (found) return found;
 
     const result = await this.pocketBaseService.getList("devices", 1, 1, {
-      filter: `deviceData.name.sanitized = "${sanitizedName}" && archived != true`,
+      filter:
+        `deviceData.name.sanitized = "${sanitizedName}" && archived != true`,
       sort: "",
       expand: "",
     });
@@ -245,7 +246,9 @@ export class DeviceService {
     const allDevices = await this.getAllDevices();
     // Simple similarity based on same category and brand
     return allDevices
-      .filter((device) => device.name.sanitized !== sanitizedName && device.archived !== true)
+      .filter((device) =>
+        device.name.sanitized !== sanitizedName && device.archived !== true
+      )
       .filter((device) => {
         // Same brand or same price category
         return (
@@ -290,7 +293,7 @@ export class DeviceService {
     );
 
     const allUpcomingDevices = allUpcomingResult.items.map((device) =>
-      enhanceDeviceWithImageUrl(device),
+      enhanceDeviceWithImageUrl(device)
     );
 
     const handheldDevices = allUpcomingDevices
@@ -304,8 +307,8 @@ export class DeviceService {
     const selectedHandhelds = handheldDevices.slice(0, 3);
     const selectedOEMs = oemDevices.slice(0, 2);
 
-    let remainingSlots =
-      amount - selectedHandhelds.length - selectedOEMs.length;
+    let remainingSlots = amount - selectedHandhelds.length -
+      selectedOEMs.length;
     let additionalHandhelds: Device[] = [];
     let additionalOEMs: Device[] = [];
 
@@ -343,16 +346,19 @@ export class DeviceService {
   }
 
   public async getBangForYourBuck(): Promise<Device[]> {
-    const baseFilter = `totalRating > 0 && deviceData.released.raw!~"upcoming" && deviceData.deviceType = "handheld" && archived != true`;
+    const baseFilter =
+      `totalRating > 0 && deviceData.released.raw!~"upcoming" && deviceData.deviceType = "handheld" && archived != true`;
 
     const [sweetSpotResult, midResult] = await Promise.all([
       this.pocketBaseService.getList("devices", 1, 3, {
-        filter: `${baseFilter} && pricing.average >= 100 && pricing.average <= 200`,
+        filter:
+          `${baseFilter} && pricing.average >= 100 && pricing.average <= 200`,
         sort: "-released,-totalRating",
         expand: "",
       }),
       this.pocketBaseService.getList("devices", 1, 5, {
-        filter: `${baseFilter} && pricing.average > 200 && pricing.average <= 500`,
+        filter:
+          `${baseFilter} && pricing.average > 200 && pricing.average <= 500`,
         sort: "-released,-totalRating",
         expand: "",
       }),

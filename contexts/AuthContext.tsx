@@ -1,6 +1,12 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { AuthService } from '../services/auth/auth.service';
-import { User } from '../types/user.contract';
+import React, {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { AuthService } from "../services/auth/auth.service";
+import { User } from "../types/user.contract";
 
 interface AuthContextType {
   user: User | null;
@@ -8,7 +14,7 @@ interface AuthContextType {
   authenticated: boolean;
   signIn: (nickname: string, password: string) => Promise<void>;
   signInWithOAuth: (
-    provider: 'google' | 'discord',
+    provider: "google" | "discord",
     code: string,
     codeVerifier: string,
     redirectUrl: string,
@@ -24,7 +30,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }
@@ -42,7 +48,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       setLoading(true);
       const currentUser = authService.getCurrentUser();
-      
+
       if (currentUser && authService.isAuthenticated()) {
         // Try to refresh token to ensure it's still valid
         try {
@@ -51,14 +57,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setUser(refreshedUser);
         } catch (error) {
           // Token might be expired, clear user
-          console.log('Auth refresh failed, clearing user:', error);
+          console.log("Auth refresh failed, clearing user:", error);
           setUser(null);
         }
       } else {
         setUser(null);
       }
     } catch (error) {
-      console.error('Error checking auth:', error);
+      console.error("Error checking auth:", error);
       setUser(null);
     } finally {
       setLoading(false);
@@ -71,7 +77,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const result = await authService.signInWithPassword(nickname, password);
       setUser(result.record as User);
     } catch (error) {
-      console.error('Sign in error:', error);
+      console.error("Sign in error:", error);
       throw error;
     } finally {
       setLoading(false);
@@ -79,7 +85,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const signInWithOAuth = async (
-    provider: 'google' | 'discord',
+    provider: "google" | "discord",
     code: string,
     codeVerifier: string,
     redirectUrl: string,
@@ -96,7 +102,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       );
       setUser(result.record as User);
     } catch (error) {
-      console.error('OAuth sign in error:', error);
+      console.error("OAuth sign in error:", error);
       throw error;
     } finally {
       setLoading(false);
@@ -114,7 +120,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const currentUser = authService.getCurrentUser();
       setUser(currentUser);
     } catch (error) {
-      console.error('Error refreshing auth:', error);
+      console.error("Error refreshing auth:", error);
       setUser(null);
     }
   };

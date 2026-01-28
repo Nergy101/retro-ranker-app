@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Box, VStack, Text, Pressable, HStack } from 'native-base';
-import { Device } from '../../types/device.model';
-import { colors } from '../../theme/colors';
+import React, { useState } from "react";
+import { Box, HStack, Pressable, Text, VStack } from "native-base";
+import { Device } from "../../types/device.model";
+import { colors } from "../../theme/colors";
 
 interface DeviceComparisonTextProps {
   devices: Device[];
@@ -42,22 +42,19 @@ export function DeviceComparisonText({ devices }: DeviceComparisonTextProps) {
   const moreRam = ram1 > ram2 ? device1 : device2;
 
   // Format values safely
-  const formatScreenSize = (size: number | null) =>
-    size ? `${size}"` : 'N/A';
+  const formatScreenSize = (size: number | null) => size ? `${size}"` : "N/A";
   const formatRam = (device: Device) =>
     device.ram?.sizes?.[0]
-      ? `${device.ram.sizes[0]} ${device.ram.unit || 'GB'}`
-      : 'N/A';
+      ? `${device.ram.sizes[0]} ${device.ram.unit || "GB"}`
+      : "N/A";
   const formatBattery = (device: Device) =>
     device.battery?.capacity
-      ? `${device.battery.capacity}${device.battery.unit || 'mAh'}`
-      : 'N/A';
+      ? `${device.battery.capacity}${device.battery.unit || "mAh"}`
+      : "N/A";
   const formatOS = (device: Device) =>
-    device.os?.list?.length ? device.os.list.join(', ') : 'Unknown OS';
+    device.os?.list?.length ? device.os.list.join(", ") : "Unknown OS";
   const formatPrice = (device: Device) =>
-    device.pricing?.average
-      ? `$${device.pricing.average}`
-      : 'N/A';
+    device.pricing?.average ? `$${device.pricing.average}` : "N/A";
 
   return (
     <Box bg={colors.backgroundCard} p={4} borderRadius="md" mb={4}>
@@ -67,7 +64,7 @@ export function DeviceComparisonText({ devices }: DeviceComparisonTextProps) {
             Textual Comparison
           </Text>
           <Text fontSize="lg" color={colors.primary}>
-            {isExpanded ? '▲' : '▼'}
+            {isExpanded ? "▲" : "▼"}
           </Text>
         </HStack>
       </Pressable>
@@ -75,11 +72,18 @@ export function DeviceComparisonText({ devices }: DeviceComparisonTextProps) {
       {isExpanded && (
         <VStack space={3} mt={4}>
           <Text fontSize="sm" color={colors.textPrimary}>
-            The <Text fontWeight="bold">{device1.brand.raw} {device1.name.raw}</Text> and{' '}
-            <Text fontWeight="bold">{device2.brand.raw} {device2.name.raw}</Text>{' '}
+            The{" "}
+            <Text fontWeight="bold">
+              {device1.brand.raw} {device1.name.raw}
+            </Text>{" "}
+            and{" "}
+            <Text fontWeight="bold">
+              {device2.brand.raw} {device2.name.raw}
+            </Text>{" "}
             are both retro gaming handhelds with different specifications and
             performance characteristics. This comparison highlights the key
-            differences to help you choose the right device for your gaming needs.
+            differences to help you choose the right device for your gaming
+            needs.
           </Text>
 
           <Box>
@@ -87,12 +91,23 @@ export function DeviceComparisonText({ devices }: DeviceComparisonTextProps) {
               Price Comparison
             </Text>
             <Text fontSize="sm" color={colors.textPrimary}>
-              The <Text fontWeight="bold">{cheaperDevice.brand.raw} {cheaperDevice.name.raw}</Text> is priced at{' '}
-              <Text fontWeight="bold">{formatPrice(cheaperDevice)}</Text>, while the{' '}
-              <Text fontWeight="bold">{expensiveDevice.brand.raw} {expensiveDevice.name.raw}</Text> costs{' '}
+              The{" "}
+              <Text fontWeight="bold">
+                {cheaperDevice.brand.raw} {cheaperDevice.name.raw}
+              </Text>{" "}
+              is priced at{" "}
+              <Text fontWeight="bold">{formatPrice(cheaperDevice)}</Text>, while
+              the{" "}
+              <Text fontWeight="bold">
+                {expensiveDevice.brand.raw} {expensiveDevice.name.raw}
+              </Text>{" "}
+              costs{" "}
               <Text fontWeight="bold">{formatPrice(expensiveDevice)}</Text>.
               {priceDiff > 0 && (
-                <> The price difference is approximately <Text fontWeight="bold">${priceDiff}</Text>.</>
+                <>
+                  The price difference is approximately{" "}
+                  <Text fontWeight="bold">${priceDiff}</Text>.
+                </>
               )}
             </Text>
           </Box>
@@ -102,10 +117,20 @@ export function DeviceComparisonText({ devices }: DeviceComparisonTextProps) {
               Display Comparison
             </Text>
             <Text fontSize="sm" color={colors.textPrimary}>
-              The <Text fontWeight="bold">{biggerScreen.brand.raw} {biggerScreen.name.raw}</Text> features a{' '}
-              <Text fontWeight="bold">{formatScreenSize(biggerScreen.screen?.size || null)}</Text> screen,
-              {screenDiff !== '0.0' && (
-                <> which is <Text fontWeight="bold">{screenDiff}"</Text> larger than the other device.</>
+              The{" "}
+              <Text fontWeight="bold">
+                {biggerScreen.brand.raw} {biggerScreen.name.raw}
+              </Text>{" "}
+              features a{" "}
+              <Text fontWeight="bold">
+                {formatScreenSize(biggerScreen.screen?.size || null)}
+              </Text>{" "}
+              screen,
+              {screenDiff !== "0.0" && (
+                <>
+                  which is <Text fontWeight="bold">{screenDiff}"</Text>{" "}
+                  larger than the other device.
+                </>
               )}
             </Text>
           </Box>
@@ -115,10 +140,22 @@ export function DeviceComparisonText({ devices }: DeviceComparisonTextProps) {
               Battery Life
             </Text>
             <Text fontSize="sm" color={colors.textPrimary}>
-              The <Text fontWeight="bold">{betterBattery.brand.raw} {betterBattery.name.raw}</Text> has a{' '}
-              <Text fontWeight="bold">{formatBattery(betterBattery)}</Text> battery,
+              The{" "}
+              <Text fontWeight="bold">
+                {betterBattery.brand.raw} {betterBattery.name.raw}
+              </Text>{" "}
+              has a{" "}
+              <Text fontWeight="bold">{formatBattery(betterBattery)}</Text>{" "}
+              battery,
               {batteryDiff > 0 && (
-                <> providing <Text fontWeight="bold">{batteryDiff}{betterBattery.battery?.unit || 'mAh'}</Text> more capacity.</>
+                <>
+                  providing{" "}
+                  <Text fontWeight="bold">
+                    {batteryDiff}
+                    {betterBattery.battery?.unit || "mAh"}
+                  </Text>{" "}
+                  more capacity.
+                </>
               )}
             </Text>
           </Box>
@@ -128,10 +165,21 @@ export function DeviceComparisonText({ devices }: DeviceComparisonTextProps) {
               Memory
             </Text>
             <Text fontSize="sm" color={colors.textPrimary}>
-              The <Text fontWeight="bold">{moreRam.brand.raw} {moreRam.name.raw}</Text> comes with{' '}
-              <Text fontWeight="bold">{formatRam(moreRam)}</Text> of RAM,
+              The{" "}
+              <Text fontWeight="bold">
+                {moreRam.brand.raw} {moreRam.name.raw}
+              </Text>{" "}
+              comes with <Text fontWeight="bold">{formatRam(moreRam)}</Text>
+              {" "}
+              of RAM,
               {ramDiff > 0 && (
-                <> which is <Text fontWeight="bold">{ramDiff} {moreRam.ram?.unit || 'GB'}</Text> more than the other device.</>
+                <>
+                  which is{" "}
+                  <Text fontWeight="bold">
+                    {ramDiff} {moreRam.ram?.unit || "GB"}
+                  </Text>{" "}
+                  more than the other device.
+                </>
               )}
             </Text>
           </Box>
@@ -141,10 +189,16 @@ export function DeviceComparisonText({ devices }: DeviceComparisonTextProps) {
               Operating System
             </Text>
             <Text fontSize="sm" color={colors.textPrimary}>
-              The <Text fontWeight="bold">{device1.brand.raw} {device1.name.raw}</Text> runs{' '}
-              <Text fontWeight="bold">{formatOS(device1)}</Text>, while the{' '}
-              <Text fontWeight="bold">{device2.brand.raw} {device2.name.raw}</Text> uses{' '}
-              <Text fontWeight="bold">{formatOS(device2)}</Text>.
+              The{" "}
+              <Text fontWeight="bold">
+                {device1.brand.raw} {device1.name.raw}
+              </Text>{" "}
+              runs <Text fontWeight="bold">{formatOS(device1)}</Text>, while the
+              {" "}
+              <Text fontWeight="bold">
+                {device2.brand.raw} {device2.name.raw}
+              </Text>{" "}
+              uses <Text fontWeight="bold">{formatOS(device2)}</Text>.
             </Text>
           </Box>
         </VStack>

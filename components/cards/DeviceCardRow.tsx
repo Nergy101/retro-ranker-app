@@ -1,10 +1,10 @@
-import React from 'react';
-import { Box, Text, Image, HStack, VStack, Pressable } from 'native-base';
-import { Feather } from '@expo/vector-icons';
-import { Device } from '../../types/device.model';
-import { getDeviceImageUrl } from '../../services/devices/device.service';
-import { colors } from '../../theme/colors';
-import { TagComponent } from '../shared/TagComponent';
+import React from "react";
+import { Box, HStack, Image, Pressable, Text, VStack } from "native-base";
+import { Feather } from "@expo/vector-icons";
+import { Device } from "../../types/device.model";
+import { getDeviceImageUrl } from "../../services/devices/device.service";
+import { colors } from "../../theme/colors";
+import { TagComponent } from "../shared/TagComponent";
 
 interface DeviceCardRowProps {
   device: Device;
@@ -24,10 +24,12 @@ export function DeviceCardRow({
   isFavorited = false,
 }: DeviceCardRowProps) {
   const imageUrl = getDeviceImageUrl(device);
-  
+
   const getPriceDisplay = () => {
     if (device.pricing.discontinued) {
-      return <Text fontSize="xs" color={colors.textTertiary}>Discontinued</Text>;
+      return (
+        <Text fontSize="xs" color={colors.textTertiary}>Discontinued</Text>
+      );
     }
     if (device.pricing.range) {
       const { min, max } = device.pricing.range;
@@ -59,32 +61,46 @@ export function DeviceCardRow({
       borderRadius="md"
       borderWidth={1}
       borderColor={colors.border}
-      p={3}
+      overflow="hidden"
       mb={2}
     >
-      <HStack space={3} alignItems="center">
-        <Image
-          source={{ uri: imageUrl }}
-          alt={device.name.raw}
-          width={80}
-          height={80}
-          resizeMode="contain"
-          bg={colors.backgroundElevated}
-          borderRadius="md"
-        />
-        
-        <VStack flex={1} space={1}>
-          <Text fontSize="md" fontWeight="bold" color={colors.textPrimary}>
-            {device.brand.raw} {device.name.raw}
+      <HStack space={0} alignItems="stretch">
+        <Box bg={colors.backgroundElevated} p={3}>
+          <Image
+            source={{ uri: imageUrl }}
+            alt={device.name.raw}
+            width={80}
+            height={80}
+            resizeMode="contain"
+          />
+        </Box>
+
+        <VStack flex={1} space={1} p={3}>
+          <Text
+            fontSize="md"
+            fontWeight="bold"
+            color={colors.textPrimary}
+            numberOfLines={1}
+            isTruncated
+          >
+            {device.name.raw}
           </Text>
-          
+          <Text
+            fontSize="xs"
+            color={colors.textSecondary}
+            numberOfLines={1}
+            isTruncated
+          >
+            {device.brand.raw}
+          </Text>
+
           <HStack space={2} alignItems="center" flexWrap="wrap">
             <Text fontSize="xs" color={colors.textSecondary}>
               ⭐ {device.totalRating.toFixed(1)}/10
             </Text>
             {getPriceDisplay()}
           </HStack>
-          
+
           {device.tags && device.tags.length > 0 && (
             <HStack space={1} flexWrap="wrap" mt={1}>
               {device.tags.slice(0, 2).map((tag) => (

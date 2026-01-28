@@ -1,6 +1,6 @@
-import { Tabs } from 'expo-router';
-import { Feather } from '@expo/vector-icons';
-import { colors } from '../../theme/colors';
+import { Tabs } from "expo-router";
+import { Feather } from "@expo/vector-icons";
+import { colors } from "../../theme/colors";
 
 export default function TabLayout() {
   return (
@@ -18,16 +18,21 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: "Home",
           tabBarIcon: ({ color, size, focused }) => (
-            <TabBarIcon name="home" color={color} size={size} focused={focused} />
+            <TabBarIcon
+              name="home"
+              color={color}
+              size={size}
+              focused={focused}
+            />
           ),
         }}
       />
       <Tabs.Screen
         name="compare"
         options={{
-          title: 'Compare',
+          title: "Compare",
           tabBarIcon: ({ color, size, focused }) => (
             <TabBarIcon
               name="compare"
@@ -41,7 +46,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: "Profile",
           tabBarIcon: ({ color, size, focused }) => (
             <TabBarIcon
               name="profile"
@@ -52,21 +57,33 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="sign-in"
+        options={{
+          href: null, // Hide from tab bar
+          title: "Sign In",
+        }}
+      />
     </Tabs>
   );
 }
 
 // Simple icon component - can be replaced with react-native-vector-icons later
 function TabBarIcon(
-  { name, color, size, focused }: { name: 'home' | 'compare' | 'profile'; color: string; size: number; focused: boolean },
+  { name, color, size, focused }: {
+    name: "home" | "compare" | "profile";
+    color: string;
+    size: number;
+    focused: boolean;
+  },
 ) {
   const icons: Record<
     typeof name,
-    React.ComponentProps<typeof Feather>['name']
+    React.ComponentProps<typeof Feather>["name"]
   > = {
-    home: 'home',
-    compare: 'git-pull-request',
-    profile: 'user',
+    home: "home",
+    compare: "git-pull-request",
+    profile: "user",
   };
 
   return (

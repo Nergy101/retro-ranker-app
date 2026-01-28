@@ -3,8 +3,8 @@ import {
   PocketBaseService,
 } from "../pocketbase/pocketbase.service";
 import {
-  AchievementMetrics,
   AchievementMetricKey,
+  AchievementMetrics,
 } from "../../types/achievement.contract";
 import { checkAchievements } from "./achievement.api";
 
@@ -28,8 +28,9 @@ export class AchievementService {
       console.log("User metrics:", metrics);
 
       // Get currently unlocked achievements
-      const unlockedAchievementIds =
-        await this.getUnlockedAchievementIds(userId);
+      const unlockedAchievementIds = await this.getUnlockedAchievementIds(
+        userId,
+      );
       console.log("Currently unlocked achievements:", unlockedAchievementIds);
 
       // Call backend API to check and unlock achievements
@@ -74,7 +75,7 @@ export class AchievementService {
 
     const ownedDeviceIds = new Set(
       collections.flatMap((collection) =>
-        collection.devices.map((d: any) => d.id),
+        collection.devices.map((d: any) => d.id)
       ),
     );
 

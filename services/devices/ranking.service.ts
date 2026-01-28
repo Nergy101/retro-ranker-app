@@ -260,30 +260,35 @@ export class RankingService {
       let totalScore = 0;
       const name = device.name.sanitized;
 
-      if (ranking.emuPerformance[0] === name)
+      if (ranking.emuPerformance[0] === name) {
         totalScore += weights.emuPerformance * 10;
-      else if (ranking.emuPerformance[0] !== "equal")
+      } else if (ranking.emuPerformance[0] !== "equal") {
         totalScore += weights.emuPerformance * 5;
+      }
 
-      if (ranking.connectivity[0] === name)
+      if (ranking.connectivity[0] === name) {
         totalScore += weights.connectivity * 10;
-      else if (ranking.connectivity[0] !== "equal")
+      } else if (ranking.connectivity[0] !== "equal") {
         totalScore += weights.connectivity * 5;
+      }
 
       if (ranking.monitor[0] === name) totalScore += weights.monitor * 10;
-      else if (ranking.monitor[0] !== "equal")
+      else if (ranking.monitor[0] !== "equal") {
         totalScore += weights.monitor * 5;
+      }
 
       if (ranking.dimensions[0] === name) totalScore += weights.dimensions * 10;
-      else if (ranking.dimensions[0] !== "equal")
+      else if (ranking.dimensions[0] !== "equal") {
         totalScore += weights.dimensions * 5;
+      }
 
       if (ranking.audio[0] === name) totalScore += weights.audio * 10;
       else if (ranking.audio[0] !== "equal") totalScore += weights.audio * 5;
 
       if (ranking.controls[0] === name) totalScore += weights.controls * 10;
-      else if (ranking.controls[0] !== "equal")
+      else if (ranking.controls[0] !== "equal") {
         totalScore += weights.controls * 5;
+      }
 
       if (ranking.misc[0] === name) totalScore += weights.misc * 10;
       else if (ranking.misc[0] !== "equal") totalScore += weights.misc * 5;

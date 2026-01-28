@@ -5,8 +5,7 @@ import {
 import { Device } from "../../types/device.model";
 import { DeviceCollection } from "../../types/device-collection";
 
-const POCKETBASE_URL =
-  process.env.EXPO_PUBLIC_POCKETBASE_URL ||
+const POCKETBASE_URL = process.env.EXPO_PUBLIC_POCKETBASE_URL ||
   "https://pocketbase.retroranker.site";
 
 /**
@@ -60,11 +59,13 @@ export class DeviceCollectionService {
         sort: "-created",
       });
 
-      return (favorites.items ?? []).map((f: any) => {
-        const deviceRecord = f.expand?.device;
-        if (!deviceRecord) return null;
-        return enhanceDeviceWithImageUrl(deviceRecord);
-      }).filter((d: Device | null): d is Device => d !== null);
+      return (favorites.items ?? [])
+        .map((f: any) => {
+          const deviceRecord = f.expand?.device;
+          if (!deviceRecord) return null;
+          return enhanceDeviceWithImageUrl(deviceRecord);
+        })
+        .filter((d: Device | null): d is Device => d !== null);
     } catch (error) {
       console.error("Failed to fetch user favorited devices:", error);
       return [];

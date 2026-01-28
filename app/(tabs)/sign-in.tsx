@@ -196,6 +196,7 @@ export default function SignInScreen() {
         pt={Math.max(insets.top, 16)}
         justifyContent="center"
         alignItems="center"
+        pb={20}
       >
         {/* Logo */}
         <VStack space={2} alignItems="center" mb={8}>

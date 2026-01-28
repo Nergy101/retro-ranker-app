@@ -1,7 +1,7 @@
-import React from 'react';
-import { Box, VStack, HStack, Text, Progress } from 'native-base';
-import { AchievementStatus } from '../../types/achievement.contract';
-import { colors } from '../../theme/colors';
+import React from "react";
+import { Box, HStack, Progress, Text, VStack } from "native-base";
+import { AchievementStatus } from "../../types/achievement.contract";
+import { colors } from "../../theme/colors";
 
 interface AchievementCardProps {
   achievement: AchievementStatus;
@@ -81,7 +81,7 @@ export function AchievementCard({ achievement }: AchievementCardProps) {
             <Text
               fontSize="xs"
               color={isUnlocked ? colors.primary : colors.textSecondary}
-              fontWeight={isUnlocked ? 'semibold' : 'normal'}
+              fontWeight={isUnlocked ? "semibold" : "normal"}
               flexShrink={0}
               numberOfLines={1}
             >

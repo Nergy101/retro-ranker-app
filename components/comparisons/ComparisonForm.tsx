@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Box, VStack, HStack, Text, Button, Pressable } from 'native-base';
-import { TextInput } from 'react-native';
-import { Device } from '../../types/device.model';
-import { DeviceService } from '../../services/devices/device.service';
-import { colors } from '../../theme/colors';
+import React, { useEffect, useState } from "react";
+import { Box, Button, HStack, Pressable, Text, VStack } from "native-base";
+import { TextInput } from "react-native";
+import { Device } from "../../types/device.model";
+import { DeviceService } from "../../services/devices/device.service";
+import { colors } from "../../theme/colors";
 
 interface ComparisonFormProps {
   onCompare: (deviceA: Device, deviceB: Device) => void;
 }
 
 export function ComparisonForm({ onCompare }: ComparisonFormProps) {
-  const [queryA, setQueryA] = useState('');
-  const [queryB, setQueryB] = useState('');
+  const [queryA, setQueryA] = useState("");
+  const [queryB, setQueryB] = useState("");
   const [suggestionsA, setSuggestionsA] = useState<Device[]>([]);
   const [suggestionsB, setSuggestionsB] = useState<Device[]>([]);
   const [showSuggestionsA, setShowSuggestionsA] = useState(false);
@@ -26,7 +26,15 @@ export function ComparisonForm({ onCompare }: ComparisonFormProps) {
   useEffect(() => {
     const searchDevices = async () => {
       if (queryA.length > 0) {
-        const results = await deviceService.searchDevices(queryA, 'all', 'all', 'all', [], 1, 5);
+        const results = await deviceService.searchDevices(
+          queryA,
+          "all",
+          "all",
+          "all",
+          [],
+          1,
+          5,
+        );
         setSuggestionsA(results.page.filter((d) => d.archived !== true));
         setShowSuggestionsA(true);
       } else {
@@ -42,7 +50,15 @@ export function ComparisonForm({ onCompare }: ComparisonFormProps) {
   useEffect(() => {
     const searchDevices = async () => {
       if (queryB.length > 0) {
-        const results = await deviceService.searchDevices(queryB, 'all', 'all', 'all', [], 1, 5);
+        const results = await deviceService.searchDevices(
+          queryB,
+          "all",
+          "all",
+          "all",
+          [],
+          1,
+          5,
+        );
         setSuggestionsB(results.page.filter((d) => d.archived !== true));
         setShowSuggestionsB(true);
       } else {
@@ -76,7 +92,12 @@ export function ComparisonForm({ onCompare }: ComparisonFormProps) {
   return (
     <Box bg={colors.backgroundCard} p={4} borderRadius="md" mb={4}>
       <VStack space={3}>
-        <Text fontSize="lg" fontWeight="bold" color={colors.textPrimary} textAlign="center">
+        <Text
+          fontSize="lg"
+          fontWeight="bold"
+          color={colors.textPrimary}
+          textAlign="center"
+        >
           Compare Devices
         </Text>
 

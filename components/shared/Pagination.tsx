@@ -1,6 +1,7 @@
-import React from 'react';
-import { VStack, HStack, Button, Text, Box, Spinner } from 'native-base';
-import { colors } from '../../theme/colors';
+import React from "react";
+import { Box, Button, HStack, Spinner, Text, VStack } from "native-base";
+import { Feather } from "@expo/vector-icons";
+import { colors } from "../../theme/colors";
 
 interface PaginationProps {
   pageNumber: number;
@@ -37,7 +38,7 @@ export function Pagination({
             py={1.5}
             _disabled={{ opacity: 0.5 }}
           >
-            <Text color={colors.primary} fontSize="xs">First</Text>
+            <Feather name="skip-back" size={16} color={colors.primary} />
           </Button>
 
           <Button
@@ -50,19 +51,19 @@ export function Pagination({
             py={1.5}
             _disabled={{ opacity: 0.5 }}
           >
-            <Text color={colors.primary} fontSize="xs">Previous</Text>
+            <Feather name="chevron-left" size={16} color={colors.primary} />
           </Button>
-          
+
           <Box minW={110} alignItems="center" justifyContent="center">
-            {isLoading ? (
-              <Spinner size="sm" color={colors.primary} />
-            ) : (
-              <Text color={colors.textPrimary} fontSize="xs" px={2}>
-                Page {pageNumber} of {totalPages}
-              </Text>
-            )}
+            {isLoading
+              ? <Spinner size="sm" color={colors.primary} />
+              : (
+                <Text color={colors.textPrimary} fontSize="xs" px={2}>
+                  Page {pageNumber} of {totalPages}
+                </Text>
+              )}
           </Box>
-          
+
           <Button
             onPress={() => onPageChange(pageNumber + 1)}
             isDisabled={!hasNext || isLoading}
@@ -73,7 +74,7 @@ export function Pagination({
             py={1.5}
             _disabled={{ opacity: 0.5 }}
           >
-            <Text color={colors.primary} fontSize="xs">Next</Text>
+            <Feather name="chevron-right" size={16} color={colors.primary} />
           </Button>
 
           <Button
@@ -86,7 +87,7 @@ export function Pagination({
             py={1.5}
             _disabled={{ opacity: 0.5 }}
           >
-            <Text color={colors.primary} fontSize="xs">Last</Text>
+            <Feather name="skip-forward" size={16} color={colors.primary} />
           </Button>
         </HStack>
       </VStack>

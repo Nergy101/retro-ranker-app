@@ -1,8 +1,8 @@
-import React from 'react';
-import { Box, VStack, HStack, Text, ScrollView, Pressable } from 'native-base';
-import { AchievementStatus } from '../../types/achievement.contract';
-import { AchievementCard } from './AchievementCard';
-import { colors } from '../../theme/colors';
+import React from "react";
+import { ScrollView, Text, VStack } from "native-base";
+import { AchievementStatus } from "../../types/achievement.contract";
+import { AchievementCard } from "./AchievementCard";
+import { colors } from "../../theme/colors";
 
 interface AchievementBoardProps {
   achievements: AchievementStatus[];
@@ -30,29 +30,10 @@ export function AchievementBoard({ achievements }: AchievementBoardProps) {
   return (
     <ScrollView>
       <VStack space={6} p={4}>
-        {/* Summary */}
-        <Box
-          bg={colors.backgroundCard}
-          borderRadius="md"
-          p={4}
-          borderWidth={1}
-          borderColor={colors.border}
-        >
-          <HStack justifyContent="space-between" alignItems="center">
-            <Text fontSize="lg" fontWeight="bold" color={colors.textPrimary}>
-              Achievements
-            </Text>
-            <Text fontSize="md" color={colors.textSecondary}>
-              {unlockedAchievements.length} / {achievements.length}
-            </Text>
-          </HStack>
-          <Text fontSize="sm" color={colors.textTertiary} mt={2}>
-            Collect playful emblems as you explore Retro Ranker.
-          </Text>
-        </Box>
-
         {/* Locked Achievements */}
-        {Object.entries(lockedByCategory).map(([category, categoryAchievements]) => (
+        {Object.entries(lockedByCategory).map((
+          [category, categoryAchievements],
+        ) => (
           <VStack key={`locked-${category}`} space={3}>
             <Text
               fontSize="md"
@@ -64,7 +45,10 @@ export function AchievementBoard({ achievements }: AchievementBoardProps) {
             </Text>
             <VStack space={3}>
               {categoryAchievements.map((achievement) => (
-                <AchievementCard key={achievement.id} achievement={achievement} />
+                <AchievementCard
+                  key={achievement.id}
+                  achievement={achievement}
+                />
               ))}
             </VStack>
           </VStack>
@@ -83,7 +67,10 @@ export function AchievementBoard({ achievements }: AchievementBoardProps) {
             </Text>
             <VStack space={3}>
               {unlockedAchievements.map((achievement) => (
-                <AchievementCard key={achievement.id} achievement={achievement} />
+                <AchievementCard
+                  key={achievement.id}
+                  achievement={achievement}
+                />
               ))}
             </VStack>
           </VStack>

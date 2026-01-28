@@ -1,22 +1,36 @@
-import React, { useState, useEffect } from 'react';
-import { ScrollView, Box, VStack, HStack, Text, Image, Spinner, Center, Button } from 'native-base';
-import { Feather } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
-import { Dimensions, StyleSheet, View } from 'react-native';
-import { DeviceService, getDeviceImageUrl } from '../../services/devices/device.service';
-import { Device } from '../../types/device.model';
-import { DeviceCard } from '../../components/cards/DeviceCard';
-import { TagComponent } from '../../components/shared/TagComponent';
-import { EmulationCapabilities } from '../../components/devices/EmulationCapabilities';
-import { SpecSummary } from '../../components/specifications/SpecSummary';
-import { FullSpecs } from '../../components/specifications/FullSpecs';
-import { colors } from '../../theme/colors';
+import React, { useEffect, useState } from "react";
+import {
+  Box,
+  Button,
+  Center,
+  HStack,
+  Image,
+  ScrollView,
+  Spinner,
+  Text,
+  VStack,
+} from "native-base";
+import { Feather } from "@expo/vector-icons";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
+import { Dimensions, StyleSheet, View } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  DeviceService,
+  getDeviceImageUrl,
+} from "../../services/devices/device.service";
+import { Device } from "../../types/device.model";
+import { DeviceCard } from "../../components/cards/DeviceCard";
+import { TagComponent } from "../../components/shared/TagComponent";
+import { EmulationCapabilities } from "../../components/devices/EmulationCapabilities";
+import { SpecSummary } from "../../components/specifications/SpecSummary";
+import { FullSpecs } from "../../components/specifications/FullSpecs";
+import { colors } from "../../theme/colors";
 
 const styles = StyleSheet.create({
   gridContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    width: '100%',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    width: "100%",
   },
   cardWrapper: {
     height: 280,
@@ -27,7 +41,7 @@ export default function DeviceDetailPage() {
   const { name } = useLocalSearchParams<{ name: string }>();
   const router = useRouter();
   const navigation = useNavigation();
-  const screenWidth = Dimensions.get('window').width;
+  const screenWidth = Dimensions.get("window").width;
   const [device, setDevice] = useState<Device | null>(null);
   const [similarDevices, setSimilarDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,7 +57,7 @@ export default function DeviceDetailPage() {
       });
     }
   }, [device, navigation]);
-  
+
   // Calculate card width for 2-column grid with gaps (same as home page)
   const cardGap = 12;
   const horizontalPadding = 16;
@@ -65,14 +79,14 @@ export default function DeviceDetailPage() {
       ]);
 
       if (!deviceData) {
-        setError('Device not found');
+        setError("Device not found");
         return;
       }
 
       setDevice(deviceData);
       setSimilarDevices(similar);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load device');
+      setError(err instanceof Error ? err.message : "Failed to load device");
     } finally {
       setLoading(false);
     }
@@ -90,8 +104,13 @@ export default function DeviceDetailPage() {
   if (error || !device) {
     return (
       <Center flex={1} bg={colors.background}>
-        <Text color={colors.error}>{error || 'Device not found'}</Text>
-        <Button mt={4} onPress={() => router.back()} bg={colors.primary} size="md">
+        <Text color={colors.error}>{error || "Device not found"}</Text>
+        <Button
+          mt={4}
+          onPress={() => router.back()}
+          bg={colors.primary}
+          size="md"
+        >
           Go Back
         </Button>
       </Center>
@@ -114,6 +133,7 @@ export default function DeviceDetailPage() {
               resizeMode="contain"
               bg={colors.backgroundElevated}
               borderRadius="md"
+              p={4}
             />
           </Box>
 
@@ -125,7 +145,11 @@ export default function DeviceDetailPage() {
             {device.pricing.average && (
               <HStack alignItems="center" space={1}>
                 <Feather name="dollar-sign" size={18} color={colors.primary} />
-                <Text fontSize="lg" color={colors.primary} fontWeight="semibold">
+                <Text
+                  fontSize="lg"
+                  color={colors.primary}
+                  fontWeight="semibold"
+                >
                   {device.pricing.average}
                 </Text>
               </HStack>
@@ -138,9 +162,26 @@ export default function DeviceDetailPage() {
               <HStack space={1.5} flexWrap="wrap">
                 {device.tags.map((tag) => (
                   <TagComponent
-                    key={tag.id}
+                    key={tag.id || tag.slug}
                     tag={tag}
                     size="xs"
+                    onPress={async () => {
+                      // Store tagId in AsyncStorage for the home page to read
+                      // Use id if available, otherwise use slug
+                      const tagIdentifier = tag.id || tag.slug;
+                      if (tagIdentifier) {
+                        try {
+                          await AsyncStorage.setItem(
+                            "selectedTagId",
+                            tagIdentifier,
+                          );
+                          // Navigate to home tab
+                          router.push("/(tabs)/");
+                        } catch (error) {
+                          console.error("Error storing tagId:", error);
+                        }
+                      }
+                    }}
                   />
                 ))}
               </HStack>
@@ -175,7 +216,12 @@ export default function DeviceDetailPage() {
           {/* Similar Devices */}
           {similarDevices.length > 0 && (
             <Box>
-              <Text fontSize="xl" fontWeight="bold" color={colors.textPrimary} mb={4}>
+              <Text
+                fontSize="xl"
+                fontWeight="bold"
+                color={colors.textPrimary}
+                mb={4}
+              >
                 Similar Devices
               </Text>
               <View style={styles.gridContainer}>
@@ -190,12 +236,15 @@ export default function DeviceDetailPage() {
                           width: cardWidth,
                           marginRight: isLeftColumn ? cardGap : 0,
                           marginBottom: cardGap,
-                        }
+                        },
                       ]}
                     >
                       <DeviceCard
                         device={similarDevice}
-                        onPress={() => router.push(`/devices/${similarDevice.name.sanitized}`)}
+                        onPress={() =>
+                          router.push(
+                            `/devices/${similarDevice.name.sanitized}`,
+                          )}
                       />
                     </View>
                   );
