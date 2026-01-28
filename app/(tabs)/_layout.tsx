@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Text } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 
 export default function TabLayout() {
@@ -58,13 +58,23 @@ export default function TabLayout() {
 
 // Simple icon component - can be replaced with react-native-vector-icons later
 function TabBarIcon(
-  { name, size }: { name: string; color: string; size: number; focused: boolean },
+  { name, color, size, focused }: { name: 'home' | 'compare' | 'profile'; color: string; size: number; focused: boolean },
 ) {
-  // Placeholder - using emoji for now
-  const icons: Record<string, string> = {
-    home: '🏠',
-    compare: '⚖️',
-    profile: '👤',
+  const icons: Record<
+    typeof name,
+    React.ComponentProps<typeof Feather>['name']
+  > = {
+    home: 'home',
+    compare: 'git-pull-request',
+    profile: 'user',
   };
-  return <Text style={{ fontSize: size }}>{icons[name] || '•'}</Text>;
+
+  return (
+    <Feather
+      name={icons[name]}
+      color={color}
+      size={size}
+      strokeWidth={focused ? 2.5 : 2}
+    />
+  );
 }

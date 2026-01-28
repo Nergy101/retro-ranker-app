@@ -42,6 +42,22 @@ export default function RootLayout() {
                 headerTintColor: '#FF6B35',
               }} 
             />
+            <Stack.Screen 
+              name="collections/[id]" 
+              options={{ 
+                title: 'Collection',
+                headerStyle: { backgroundColor: '#1a1a1a' },
+                headerTintColor: '#FF6B35',
+              }} 
+            />
+            <Stack.Screen 
+              name="auth/[provider]/callback" 
+              options={{ 
+                headerShown: false,
+                presentation: 'modal',
+                gestureEnabled: false,
+              }} 
+            />
           </Stack>
         </NativeBaseProvider>
       </AuthProvider>

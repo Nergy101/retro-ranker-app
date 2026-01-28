@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ScrollView, Box, VStack, HStack, Text, Image, Spinner, Center, Button } from 'native-base';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Feather } from '@expo/vector-icons';
+import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
 import { Dimensions, StyleSheet, View } from 'react-native';
 import { DeviceService, getDeviceImageUrl } from '../../services/devices/device.service';
 import { Device } from '../../types/device.model';
@@ -25,6 +26,7 @@ const styles = StyleSheet.create({
 export default function DeviceDetailPage() {
   const { name } = useLocalSearchParams<{ name: string }>();
   const router = useRouter();
+  const navigation = useNavigation();
   const screenWidth = Dimensions.get('window').width;
   const [device, setDevice] = useState<Device | null>(null);
   const [similarDevices, setSimilarDevices] = useState<Device[]>([]);
@@ -32,6 +34,15 @@ export default function DeviceDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   const deviceService = DeviceService.getInstance();
+
+  // Update navigation title when device is loaded
+  useEffect(() => {
+    if (device) {
+      navigation.setOptions({
+        title: `${device.brand.raw} ${device.name.raw}`,
+      });
+    }
+  }, [device, navigation]);
   
   // Calculate card width for 2-column grid with gaps (same as home page)
   const cardGap = 12;
@@ -112,9 +123,12 @@ export default function DeviceDetailPage() {
               {device.brand.raw} {device.name.raw}
             </Text>
             {device.pricing.average && (
-              <Text fontSize="lg" color={colors.primary} fontWeight="semibold">
-                {device.pricing.currency} {device.pricing.average}
-              </Text>
+              <HStack alignItems="center" space={1}>
+                <Feather name="dollar-sign" size={18} color={colors.primary} />
+                <Text fontSize="lg" color={colors.primary} fontWeight="semibold">
+                  {device.pricing.average}
+                </Text>
+              </HStack>
             )}
           </VStack>
 

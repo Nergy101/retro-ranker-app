@@ -9,7 +9,8 @@ import {
   Spinner,
   Image,
 } from 'native-base';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { Feather } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { Linking as ReactNativeLinking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
@@ -24,8 +25,15 @@ const API_BASE_URL = 'https://retroranker.site';
 function getMobileRedirectUrl(provider: 'google' | 'discord'): string {
   // Expo Go needs an exp://... style URL (Safari can open it back into Expo Go).
   if (Constants.appOwnership === 'expo' && Constants.linkingUri) {
-    // Constants.linkingUri typically ends with "/--/" in Expo Go.
-    return `${Constants.linkingUri}auth/${provider}/callback`;
+    // Expo Go deep links must include the "/--/" segment to route into the app.
+    let base = Constants.linkingUri;
+    if (!base.endsWith("/")) base += "/";
+    if (!base.includes("/--/")) {
+      base += "--/";
+    } else if (!base.endsWith("/--/")) {
+      base = base.replace(/\/--\/.*$/, "/--/");
+    }
+    return `${base}auth/${provider}/callback`;
   }
 
   // Standalone/dev builds: use the app scheme from app.json (`retroranker://...`).
@@ -35,73 +43,9 @@ function getMobileRedirectUrl(provider: 'google' | 'discord'): string {
 export default function SignInScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { signInWithOAuth, authenticated, user, loading: authLoading } = useAuth();
-  const params = useLocalSearchParams();
+  const { authenticated, user, loading: authLoading } = useAuth();
   const [oauthLoading, setOauthLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  // Handle OAuth callback
-  useEffect(() => {
-    const handleDeepLink = async (url: string) => {
-      try {
-        const parsedUrl = new URL(url);
-        const code = parsedUrl.searchParams.get('code');
-        const state = parsedUrl.searchParams.get('state');
-        const provider = parsedUrl.pathname.includes('google') ? 'google' : 'discord';
-
-        if (code && state) {
-          setOauthLoading(provider);
-          const codeVerifier = await pkceSessionService.getFromSession(state, { remove: true });
-
-          if (!codeVerifier) {
-            throw new Error('Invalid OAuth session');
-          }
-
-          // This must match the redirect_uri used for the provider's authorization code.
-          // Our server uses an HTTPS website callback for Discord/Google, so we must use that
-          // when exchanging the code for tokens with PocketBase.
-          const websiteCallbackUrl = `${API_BASE_URL}/api/auth/${provider}/callback`;
-          await signInWithOAuth(provider, code, codeVerifier, websiteCallbackUrl);
-          
-          // Navigate to profile on success
-          router.replace('/(tabs)/profile');
-        }
-      } catch (err) {
-        console.error('OAuth callback error:', err);
-        setError(err instanceof Error ? err.message : 'OAuth authentication failed');
-        setOauthLoading(null);
-      }
-    };
-
-    // Check if we're coming from OAuth callback
-    if (params.code && params.state) {
-      const provider = params.provider as 'google' | 'discord' | undefined;
-      if (provider) {
-        const callbackUrl = Linking.createURL(`auth/${provider}/callback`, {
-          queryParams: { code: String(params.code), state: String(params.state) },
-        });
-        handleDeepLink(callbackUrl);
-      }
-    }
-
-    // Listen for deep links
-    const subscription = ReactNativeLinking.addEventListener('url', (event) => {
-      if (event.url.includes('/auth/')) {
-        handleDeepLink(event.url);
-      }
-    });
-
-    // Check for initial URL (app opened via deep link)
-    ReactNativeLinking.getInitialURL().then((url) => {
-      if (url && url.includes('/auth/')) {
-        handleDeepLink(url);
-      }
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, [params, signInWithOAuth, router]);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -198,7 +142,7 @@ export default function SignInScreen() {
             resizeMode="contain"
           />
           <Text fontSize="2xl" fontWeight="bold" color={colors.textPrimary}>
-            Log In
+            Sign In - Retro Ranker
           </Text>
         </VStack>
 
@@ -241,7 +185,7 @@ export default function SignInScreen() {
                 isDisabled={!!oauthLoading}
               >
                 <HStack space={2} alignItems="center">
-                  <Text fontSize="xl">💬</Text>
+                  <Feather name="message-circle" size={22} color={colors.textPrimary} />
                   <Text color={colors.textPrimary} fontWeight="semibold">
                     Discord
                   </Text>
@@ -259,7 +203,7 @@ export default function SignInScreen() {
                 isDisabled={!!oauthLoading}
               >
                 <HStack space={2} alignItems="center">
-                  <Text fontSize="xl">🔍</Text>
+                  <Feather name="chrome" size={22} color={colors.textPrimary} />
                   <Text color={colors.textPrimary} fontWeight="semibold">
                     Google
                   </Text>

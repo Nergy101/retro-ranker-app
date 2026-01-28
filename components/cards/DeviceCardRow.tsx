@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Text, Image, HStack, VStack, Pressable } from 'native-base';
+import { Feather } from '@expo/vector-icons';
 import { Device } from '../../types/device.model';
 import { getDeviceImageUrl } from '../../services/devices/device.service';
 import { colors } from '../../theme/colors';
@@ -32,15 +33,21 @@ export function DeviceCardRow({
       const { min, max } = device.pricing.range;
       if (min === max) {
         return (
-          <Text fontSize="sm" color={colors.primary} fontWeight="bold">
-            {device.pricing.currency} {min}
-          </Text>
+          <HStack alignItems="center" space={1}>
+            <Feather name="dollar-sign" size={14} color={colors.primary} />
+            <Text fontSize="sm" color={colors.primary} fontWeight="bold">
+              {min}
+            </Text>
+          </HStack>
         );
       }
       return (
-        <Text fontSize="sm" color={colors.primary} fontWeight="bold">
-          {device.pricing.currency} {min} - {max}
-        </Text>
+        <HStack alignItems="center" space={1}>
+          <Feather name="dollar-sign" size={14} color={colors.primary} />
+          <Text fontSize="sm" color={colors.primary} fontWeight="bold">
+            {min} - {max}
+          </Text>
+        </HStack>
       );
     }
     return null;

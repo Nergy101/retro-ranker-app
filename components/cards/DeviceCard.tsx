@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Text, Image, HStack, VStack, Badge, Pressable } from 'native-base';
+import { Feather } from '@expo/vector-icons';
 import { Device } from '../../types/device.model';
 import { getDeviceImageUrl } from '../../services/devices/device.service';
 import { EmulationBadge } from '../devices/EmulationBadge';
@@ -9,9 +10,10 @@ import { colors } from '../../theme/colors';
 interface DeviceCardProps {
   device: Device;
   onPress?: () => void;
+  imageOnly?: boolean;
 }
 
-export function DeviceCard({ device, onPress }: DeviceCardProps) {
+export function DeviceCard({ device, onPress, imageOnly = false }: DeviceCardProps) {
   const imageUrl = getDeviceImageUrl(device);
   
   // Calculate appropriate font size based on title length
@@ -34,15 +36,21 @@ export function DeviceCard({ device, onPress }: DeviceCardProps) {
       const { min, max } = device.pricing.range;
       if (min === max) {
         return (
-          <Text fontSize="xs" color={colors.primary} fontWeight="bold">
-            {device.pricing.currency} {min}
-          </Text>
+          <HStack alignItems="center" space={1}>
+            <Feather name="dollar-sign" size={12} color={colors.primary} />
+            <Text fontSize="xs" color={colors.primary} fontWeight="bold">
+              {min}
+            </Text>
+          </HStack>
         );
       }
       return (
-        <Text fontSize="xs" color={colors.primary} fontWeight="bold">
-          {device.pricing.currency} {min} - {max}
-        </Text>
+        <HStack alignItems="center" space={1}>
+          <Feather name="dollar-sign" size={12} color={colors.primary} />
+          <Text fontSize="xs" color={colors.primary} fontWeight="bold">
+            {min} - {max}
+          </Text>
+        </HStack>
       );
     }
     return null;
@@ -74,7 +82,28 @@ export function DeviceCard({ device, onPress }: DeviceCardProps) {
     );
   };
 
-  const content = (
+  const content = imageOnly ? (
+    <Box
+      bg={colors.backgroundCard}
+      borderRadius="md"
+      borderWidth={1}
+      borderColor={colors.border}
+      p={2}
+      height="100%"
+    >
+      <Box flex={1} width="full" height="100%">
+        <Image
+          source={{ uri: imageUrl }}
+          alt={device.name.raw}
+          width="full"
+          height="100%"
+          resizeMode="contain"
+          bg={colors.backgroundElevated}
+          borderRadius="md"
+        />
+      </Box>
+    </Box>
+  ) : (
     <Box
       bg={colors.backgroundCard}
       borderRadius="md"

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, VStack, HStack, Text, Image, Badge } from 'native-base';
+import { Feather } from '@expo/vector-icons';
 import { Device } from '../../types/device.model';
 import { Ranking } from '../../services/devices/ranking.service';
 import { getDeviceImageUrl } from '../../services/devices/device.service';
@@ -58,9 +59,12 @@ export function DeviceComparisonResult({ device, ranking }: DeviceComparisonResu
             {device.brand.raw} {device.name.raw}
           </Text>
           {device.pricing.average && (
-            <Text fontSize="lg" color={colors.primary} fontWeight="semibold">
-              {device.pricing.currency} {device.pricing.average}
-            </Text>
+            <HStack alignItems="center" space={1}>
+              <Feather name="dollar-sign" size={18} color={colors.primary} />
+              <Text fontSize="lg" color={colors.primary} fontWeight="semibold">
+                {device.pricing.average}
+              </Text>
+            </HStack>
           )}
         </Box>
 

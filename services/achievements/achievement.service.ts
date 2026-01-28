@@ -142,14 +142,12 @@ export class AchievementService {
 
   private async getUserReviewCount(userId: string): Promise<number> {
     try {
-      console.log(`Fetching review count for user: ${userId}`);
       const reviews = await this.pb.getList("device_reviews", 1, 1, {
         filter: `user = "${userId}"`,
         sort: "-created",
         expand: "",
       });
       const count = reviews.totalItems ?? reviews.items.length ?? 0;
-      console.log(`Found ${count} reviews for user ${userId}`);
       return count;
     } catch (error) {
       console.error("Failed to fetch user review count:", error);

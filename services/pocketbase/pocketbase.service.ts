@@ -124,7 +124,13 @@ export class PocketBaseService {
       return result;
     } catch (error: unknown) {
       if (error instanceof ClientResponseError) {
-        console.error("OAuth2 error:", error.message);
+        console.error("OAuth2 error:", {
+          message: error.message,
+          status: error.status,
+          url: error.url,
+          data: (error as any).data,
+          response: (error as any).response,
+        });
       }
       throw error;
     }

@@ -27,24 +27,27 @@ export function AchievementCard({ achievement }: AchievementCardProps) {
             borderRadius="full"
             width={12}
             height={12}
+            flexShrink={0}
             justifyContent="center"
             alignItems="center"
           >
             <Text fontSize="2xl">{achievement.icon}</Text>
           </Box>
-          <VStack flex={1} space={1}>
+          <VStack flex={1} flexShrink={1} space={1}>
             <Text
               fontSize="xs"
               color={colors.textTertiary}
               textTransform="uppercase"
               fontWeight="semibold"
+              numberOfLines={1}
             >
               {achievement.category}
             </Text>
             <Text
-              fontSize="lg"
+              fontSize="md"
               fontWeight="bold"
               color={isUnlocked ? colors.textPrimary : colors.textSecondary}
+              numberOfLines={2}
             >
               {achievement.name}
             </Text>
@@ -52,7 +55,7 @@ export function AchievementCard({ achievement }: AchievementCardProps) {
         </HStack>
 
         {/* Description */}
-        <Text fontSize="sm" color={colors.textSecondary}>
+        <Text fontSize="sm" color={colors.textSecondary} numberOfLines={3}>
           {achievement.description}
         </Text>
 
@@ -66,14 +69,21 @@ export function AchievementCard({ achievement }: AchievementCardProps) {
             }}
             size="sm"
           />
-          <HStack justifyContent="space-between" alignItems="center">
-            <Text fontSize="xs" color={colors.textTertiary}>
+          <HStack justifyContent="space-between" alignItems="center" space={2}>
+            <Text
+              fontSize="xs"
+              color={colors.textTertiary}
+              flex={1}
+              numberOfLines={1}
+            >
               {achievement.progressLabel}
             </Text>
             <Text
               fontSize="xs"
               color={isUnlocked ? colors.primary : colors.textSecondary}
               fontWeight={isUnlocked ? 'semibold' : 'normal'}
+              flexShrink={0}
+              numberOfLines={1}
             >
               {achievement.statusText}
             </Text>

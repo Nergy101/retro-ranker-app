@@ -1,14 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Text, Center, Button, VStack, HStack, Spinner, ScrollView } from 'native-base';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Box, Text, Center, Button, VStack, HStack, Spinner, ScrollView, Badge, Pressable } from 'native-base';
+import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
+import { Dimensions } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { colors } from '../../theme/colors';
 import { AchievementService } from '../../services/achievements/achievement.service';
 import { buildAchievementBoard } from '../../services/achievements/achievement.helpers';
 import { AchievementStatus } from '../../types/achievement.contract';
 import { AchievementBoard } from '../../components/achievements/AchievementBoard';
+import { DeviceCollectionService } from '../../services/devices/device-collection.service';
+import { Device } from '../../types/device.model';
+import { DeviceCollection } from '../../types/device-collection';
+import { DeviceCard } from '../../components/cards/DeviceCard';
+import { DeviceCardRow } from '../../components/cards/DeviceCardRow';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -18,6 +25,67 @@ export default function ProfilePage() {
   const [loadingAchievements, setLoadingAchievements] = useState(true);
   const [checkingAchievements, setCheckingAchievements] = useState(false);
   const [achievementService] = useState(() => new AchievementService());
+  const [favoritedDevices, setFavoritedDevices] = useState<Device[]>([]);
+  const [collections, setCollections] = useState<DeviceCollection[]>([]);
+  const [loadingFavorites, setLoadingFavorites] = useState(true);
+  const [loadingCollections, setLoadingCollections] = useState(true);
+  const [deviceCollectionService] = useState(() => DeviceCollectionService.getInstance());
+  const [favoritesExpanded, setFavoritesExpanded] = useState(false);
+  const [achievementsExpanded, setAchievementsExpanded] = useState(false);
+  const [collectionsExpanded, setCollectionsExpanded] = useState(false);
+
+  const loadAchievements = useCallback(async () => {
+    if (!authenticated || !user) return;
+
+    try {
+      setLoadingAchievements(true);
+      const [metrics, unlockedIds] = await Promise.all([
+        achievementService.getUserMetrics(user.id),
+        achievementService.getUnlockedAchievementIds(user.id),
+      ]);
+
+      const achievementBoard = buildAchievementBoard(metrics, unlockedIds);
+      setAchievements(achievementBoard);
+    } catch (error) {
+      console.error('Error loading achievements:', error);
+    } finally {
+      setLoadingAchievements(false);
+    }
+  }, [achievementService, authenticated, user]);
+
+  const loadFavorites = useCallback(async () => {
+    if (!authenticated || !user) return;
+
+    try {
+      setLoadingFavorites(true);
+      const devices = await deviceCollectionService.getUserFavoritedDevices(user.id);
+      setFavoritedDevices(devices);
+    } catch (error) {
+      console.error('Error loading favorites:', error);
+    } finally {
+      setLoadingFavorites(false);
+    }
+  }, [deviceCollectionService, authenticated, user]);
+
+  const loadCollections = useCallback(async () => {
+    if (!authenticated || !user) return;
+
+    try {
+      setLoadingCollections(true);
+      const userCollections = await deviceCollectionService.getUserDeviceCollections(user.id);
+      setCollections(userCollections);
+    } catch (error) {
+      console.error('Error loading collections:', error);
+    } finally {
+      setLoadingCollections(false);
+    }
+  }, [deviceCollectionService, authenticated, user]);
+
+  useEffect(() => {
+    loadAchievements();
+    loadFavorites();
+    loadCollections();
+  }, [loadAchievements, loadFavorites, loadCollections]);
 
   if (loading) {
     return (
@@ -60,31 +128,6 @@ export default function ProfilePage() {
       </Box>
     );
   }
-
-  useEffect(() => {
-    if (authenticated && user) {
-      loadAchievements();
-    }
-  }, [authenticated, user]);
-
-  const loadAchievements = async () => {
-    if (!user) return;
-
-    try {
-      setLoadingAchievements(true);
-      const [metrics, unlockedIds] = await Promise.all([
-        achievementService.getUserMetrics(user.id),
-        achievementService.getUnlockedAchievementIds(user.id),
-      ]);
-
-      const achievementBoard = buildAchievementBoard(metrics, unlockedIds);
-      setAchievements(achievementBoard);
-    } catch (error) {
-      console.error('Error loading achievements:', error);
-    } finally {
-      setLoadingAchievements(false);
-    }
-  };
 
   const handleCheckAchievements = async () => {
     if (!user) return;
@@ -151,45 +194,275 @@ export default function ProfilePage() {
             </Text>
           </VStack>
 
-          {/* Achievements Section */}
-          {loadingAchievements ? (
-            <Center py={8}>
-              <Spinner size="lg" color={colors.primary} />
-              <Text color={colors.textSecondary} mt={4}>
-                Loading achievements...
-              </Text>
-            </Center>
-          ) : (
-            <VStack space={4}>
-              <HStack justifyContent="space-between" alignItems="center">
-                <Text color={colors.textPrimary} fontSize="lg" fontWeight="semibold">
-                  Achievements
-                </Text>
-                <Button
-                  onPress={handleCheckAchievements}
-                  bg={colors.primary}
-                  _pressed={{ bg: colors.primaryHover }}
-                  size="sm"
-                  isLoading={checkingAchievements}
-                  isDisabled={checkingAchievements}
-                >
-                  <Text color={colors.textPrimary} fontSize="xs">
-                    Check
-                  </Text>
-                </Button>
-              </HStack>
+          {/* Favorite Devices Section */}
+          <Box
+            bg={colors.backgroundCard}
+            borderRadius="md"
+            borderWidth={1}
+            borderColor={colors.border}
+            overflow="hidden"
+          >
+            <Pressable onPress={() => setFavoritesExpanded(!favoritesExpanded)}>
+              <Box
+                p={4}
+                bg={favoritesExpanded ? colors.backgroundElevated : colors.backgroundCard}
+              >
+                <HStack justifyContent="space-between" alignItems="center">
+                  <HStack alignItems="center" space={2}>
+                    <Feather name="heart" size={20} color={colors.primary} />
+                    <Text color={colors.textPrimary} fontSize="lg" fontWeight="semibold">
+                      Favorites
+                    </Text>
+                    <Badge
+                      bg={colors.primaryFocus}
+                      borderRadius="full"
+                      px={2}
+                      py={0.5}
+                    >
+                      <Text fontSize="xs" color={colors.textSecondary}>
+                        {favoritedDevices.length} {favoritedDevices.length === 1 ? 'device' : 'devices'}
+                      </Text>
+                    </Badge>
+                  </HStack>
+                  <Feather 
+                    name={favoritesExpanded ? "chevron-up" : "chevron-down"} 
+                    size={20} 
+                    color={colors.textSecondary} 
+                  />
+                </HStack>
+              </Box>
+            </Pressable>
 
-              {achievements.length > 0 ? (
-                <AchievementBoard achievements={achievements} />
-              ) : (
-                <Center py={8}>
-                  <Text color={colors.textSecondary}>
-                    No achievements available
-                  </Text>
-                </Center>
-              )}
-            </VStack>
-          )}
+            {favoritesExpanded && (
+              <Box p={4} pt={0}>
+                {loadingFavorites ? (
+                  <Center py={8}>
+                    <Spinner size="lg" color={colors.primary} />
+                    <Text color={colors.textSecondary} mt={4}>
+                      Loading favorites...
+                    </Text>
+                  </Center>
+                ) : favoritedDevices.length === 0 ? (
+                  <Center py={8}>
+                    <Text color={colors.textSecondary} textAlign="center">
+                      No favorites yet
+                    </Text>
+                    <Text color={colors.textTertiary} fontSize="sm" textAlign="center" mt={2}>
+                      Start exploring devices and add them to your favorites to see them here.
+                    </Text>
+                  </Center>
+                ) : (
+                  <VStack space={3} mt={4}>
+                    {Array.from({ length: Math.ceil(favoritedDevices.length / 2) }).map((_, rowIndex) => (
+                      <HStack key={rowIndex} space={3} width="100%">
+                        {favoritedDevices
+                          .slice(rowIndex * 2, rowIndex * 2 + 2)
+                          .map((device) => (
+                            <Box key={device.id} flex={1} height={280}>
+                              <DeviceCard
+                                device={device}
+                                onPress={() => router.push(`/devices/${device.name.sanitized}`)}
+                              />
+                            </Box>
+                          ))}
+                        {/* Fill empty slot if odd number of items */}
+                        {favoritedDevices.slice(rowIndex * 2, rowIndex * 2 + 2).length === 1 && (
+                          <Box flex={1} />
+                        )}
+                      </HStack>
+                    ))}
+                  </VStack>
+                )}
+              </Box>
+            )}
+          </Box>
+
+          {/* Achievements Section */}
+          <Box
+            bg={colors.backgroundCard}
+            borderRadius="md"
+            borderWidth={1}
+            borderColor={colors.border}
+            overflow="hidden"
+          >
+            <Pressable onPress={() => setAchievementsExpanded(!achievementsExpanded)}>
+              <Box
+                p={4}
+                bg={achievementsExpanded ? colors.backgroundElevated : colors.backgroundCard}
+              >
+                <HStack justifyContent="space-between" alignItems="center">
+                  <HStack alignItems="center" space={2}>
+                    <Feather name="award" size={20} color={colors.primary} />
+                    <Text color={colors.textPrimary} fontSize="lg" fontWeight="semibold">
+                      Achievements
+                    </Text>
+                  </HStack>
+                  <Feather 
+                    name={achievementsExpanded ? "chevron-up" : "chevron-down"} 
+                    size={20} 
+                    color={colors.textSecondary} 
+                  />
+                </HStack>
+              </Box>
+            </Pressable>
+
+            {achievementsExpanded && (
+              <Box p={4} pt={0}>
+                {loadingAchievements ? (
+                  <Center py={8}>
+                    <Spinner size="lg" color={colors.primary} />
+                    <Text color={colors.textSecondary} mt={4}>
+                      Loading achievements...
+                    </Text>
+                  </Center>
+                ) : achievements.length > 0 ? (
+                  <Box mt={4}>
+                    <AchievementBoard achievements={achievements} />
+                  </Box>
+                ) : (
+                  <Center py={8}>
+                    <Text color={colors.textSecondary}>
+                      No achievements available
+                    </Text>
+                  </Center>
+                )}
+              </Box>
+            )}
+          </Box>
+
+          {/* Device Collections Section */}
+          <Box
+            bg={colors.backgroundCard}
+            borderRadius="md"
+            borderWidth={1}
+            borderColor={colors.border}
+            overflow="hidden"
+          >
+            <Pressable onPress={() => setCollectionsExpanded(!collectionsExpanded)}>
+              <Box
+                p={4}
+                bg={collectionsExpanded ? colors.backgroundElevated : colors.backgroundCard}
+              >
+                <HStack justifyContent="space-between" alignItems="center">
+                  <HStack alignItems="center" space={2}>
+                    <Feather name="folder" size={20} color={colors.primary} />
+                    <Text color={colors.textPrimary} fontSize="lg" fontWeight="semibold">
+                      Collections
+                    </Text>
+                    <Badge
+                      bg={colors.primaryFocus}
+                      borderRadius="full"
+                      px={2}
+                      py={0.5}
+                    >
+                      <Text fontSize="xs" color={colors.textSecondary}>
+                        {collections.length} {collections.length === 1 ? 'collection' : 'collections'}
+                      </Text>
+                    </Badge>
+                  </HStack>
+                  <Feather 
+                    name={collectionsExpanded ? "chevron-up" : "chevron-down"} 
+                    size={20} 
+                    color={colors.textSecondary} 
+                  />
+                </HStack>
+              </Box>
+            </Pressable>
+
+            {collectionsExpanded && (
+              <Box p={4} pt={0}>
+                {loadingCollections ? (
+                  <Center py={8}>
+                    <Spinner size="lg" color={colors.primary} />
+                    <Text color={colors.textSecondary} mt={4}>
+                      Loading collections...
+                    </Text>
+                  </Center>
+                ) : collections.length === 0 ? (
+                  <Center py={8}>
+                    <Text color={colors.textSecondary} textAlign="center">
+                      No collections yet
+                    </Text>
+                    <Text color={colors.textTertiary} fontSize="sm" textAlign="center" mt={2}>
+                      Create your first collection to organize your favorite devices.
+                    </Text>
+                  </Center>
+                ) : (
+                  <VStack space={4} mt={4}>
+                    {collections.map((collection) => {
+                      const displayDevices = collection.devices.slice(0, 4);
+                      return (
+                        <Pressable
+                          key={collection.id}
+                          onPress={() => router.push(`/collections/${collection.id}`)}
+                        >
+                          <Box
+                            bg={colors.backgroundCard}
+                            borderRadius="md"
+                            borderWidth={1}
+                            borderColor={colors.border}
+                            p={4}
+                          >
+                            <VStack space={3}>
+                            <VStack space={1}>
+                              <Text color={colors.textPrimary} fontSize="md" fontWeight="semibold">
+                                {collection.name}
+                              </Text>
+                              <Badge
+                                bg={colors.primaryFocus}
+                                borderRadius="full"
+                                px={2}
+                                py={0.5}
+                                alignSelf="flex-start"
+                              >
+                                <Text fontSize="xs" color={colors.textSecondary}>
+                                  {collection.deviceCount} {collection.deviceCount === 1 ? 'device' : 'devices'}
+                                </Text>
+                              </Badge>
+                              {collection.description && (
+                                <Text color={colors.textSecondary} fontSize="sm">
+                                  {collection.description}
+                                </Text>
+                              )}
+                            </VStack>
+
+                              {displayDevices.length > 0 ? (
+                                <VStack space={2}>
+                                  {Array.from({ length: Math.ceil(displayDevices.length / 2) }).map((_, rowIndex) => (
+                                    <HStack key={rowIndex} space={2} width="100%">
+                                      {displayDevices
+                                        .slice(rowIndex * 2, rowIndex * 2 + 2)
+                                        .map((device) => (
+                                          <Box key={device.id} flex={1} height={180}>
+                                            <DeviceCard
+                                              device={device}
+                                              onPress={() => router.push(`/devices/${device.name.sanitized}`)}
+                                              imageOnly={true}
+                                            />
+                                          </Box>
+                                        ))}
+                                      {/* Fill empty slot if odd number of items */}
+                                      {displayDevices.slice(rowIndex * 2, rowIndex * 2 + 2).length === 1 && (
+                                        <Box flex={1} />
+                                      )}
+                                    </HStack>
+                                  ))}
+                                </VStack>
+                              ) : (
+                                <Text color={colors.textTertiary} fontSize="sm" textAlign="center" py={2}>
+                                  No devices in this collection
+                                </Text>
+                              )}
+                            </VStack>
+                          </Box>
+                        </Pressable>
+                      );
+                    })}
+                  </VStack>
+                )}
+              </Box>
+            )}
+          </Box>
 
           {/* Sign Out Button */}
           <Button

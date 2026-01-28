@@ -56,7 +56,7 @@ export function DeviceComparisonText({ devices }: DeviceComparisonTextProps) {
     device.os?.list?.length ? device.os.list.join(', ') : 'Unknown OS';
   const formatPrice = (device: Device) =>
     device.pricing?.average
-      ? `${device.pricing.average} ${device.pricing.currency}`
+      ? `$${device.pricing.average}`
       : 'N/A';
 
   return (
@@ -92,7 +92,7 @@ export function DeviceComparisonText({ devices }: DeviceComparisonTextProps) {
               <Text fontWeight="bold">{expensiveDevice.brand.raw} {expensiveDevice.name.raw}</Text> costs{' '}
               <Text fontWeight="bold">{formatPrice(expensiveDevice)}</Text>.
               {priceDiff > 0 && (
-                <> The price difference is approximately <Text fontWeight="bold">{priceDiff} {cheaperDevice.pricing?.currency}</Text>.</>
+                <> The price difference is approximately <Text fontWeight="bold">${priceDiff}</Text>.</>
               )}
             </Text>
           </Box>
