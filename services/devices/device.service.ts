@@ -4,8 +4,10 @@ import {
 } from "../pocketbase/pocketbase.service";
 import { Device } from "../../types/device.model";
 import { TagModel } from "../../types/tag.model";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const POCKETBASE_URL = process.env.EXPO_PUBLIC_POCKETBASE_URL ||
+const POCKETBASE_URL =
+  process.env.EXPO_PUBLIC_POCKETBASE_URL ||
   "https://pocketbase.retroranker.site";
 
 const personalPicks: string[] = [
@@ -63,6 +65,8 @@ export class DeviceService {
   private devicesCache: { data: Device[]; timestamp: number } | null = null;
   private tagsCache: { data: TagModel[]; timestamp: number } | null = null;
   private readonly cacheDurationMs = 30 * 60 * 1000; // 30 minutes
+  private readonly tagsCacheDurationMs = 24 * 60 * 60 * 1000; // 24 hours for tags
+  private readonly TAGS_CACHE_KEY = "device_tags_cache";
 
   private constructor(pocketBaseService: PocketBaseService) {
     this.pocketBaseService = pocketBaseService;
@@ -97,6 +101,8 @@ export class DeviceService {
 
   public async getAllTags(forceRefresh = false): Promise<TagModel[]> {
     const now = Date.now();
+
+    // Check in-memory cache first (fastest)
     if (
       !forceRefresh &&
       this.tagsCache &&
@@ -105,8 +111,45 @@ export class DeviceService {
       return this.tagsCache.data;
     }
 
+    // Check AsyncStorage cache (persistent across app restarts)
+    if (!forceRefresh) {
+      try {
+        const cachedData = await AsyncStorage.getItem(this.TAGS_CACHE_KEY);
+        if (cachedData) {
+          const parsed = JSON.parse(cachedData) as {
+            data: TagModel[];
+            timestamp: number;
+          };
+          if (now - parsed.timestamp < this.tagsCacheDurationMs) {
+            // Update in-memory cache for faster access
+            this.tagsCache = parsed;
+            return parsed.data;
+          }
+        }
+      } catch (error) {
+        console.error("Error reading tags from AsyncStorage cache:", error);
+        // Continue to fetch from API if cache read fails
+      }
+    }
+
+    // Fetch from API
     const data = await this.pocketBaseService.getAll("tags");
-    this.tagsCache = { data, timestamp: now };
+    const cacheEntry = { data, timestamp: now };
+
+    // Update in-memory cache
+    this.tagsCache = cacheEntry;
+
+    // Save to AsyncStorage for persistence
+    try {
+      await AsyncStorage.setItem(
+        this.TAGS_CACHE_KEY,
+        JSON.stringify(cacheEntry),
+      );
+    } catch (error) {
+      console.error("Error saving tags to AsyncStorage cache:", error);
+      // Don't fail if cache save fails
+    }
+
     return data;
   }
 
@@ -137,8 +180,7 @@ export class DeviceService {
     // Add search query filter
     if (query) {
       if (filterString) filterString += " && ";
-      filterString +=
-        `(deviceData.name.sanitized ~ "${lowerQuery}" || deviceData.name.raw ~ "${lowerQuery}" || deviceData.brand.raw ~ "${lowerQuery}" || deviceData.os.raw ~ "${lowerQuery}")`;
+      filterString += `(deviceData.name.sanitized ~ "${lowerQuery}" || deviceData.name.raw ~ "${lowerQuery}" || deviceData.brand.raw ~ "${lowerQuery}" || deviceData.os.raw ~ "${lowerQuery}")`;
     }
 
     // Add filter for upcoming devices
@@ -213,8 +255,7 @@ export class DeviceService {
     if (found) return found;
 
     const result = await this.pocketBaseService.getList("devices", 1, 1, {
-      filter:
-        `deviceData.name.sanitized = "${sanitizedName}" && archived != true`,
+      filter: `deviceData.name.sanitized = "${sanitizedName}" && archived != true`,
       sort: "",
       expand: "",
     });
@@ -246,8 +287,9 @@ export class DeviceService {
     const allDevices = await this.getAllDevices();
     // Simple similarity based on same category and brand
     return allDevices
-      .filter((device) =>
-        device.name.sanitized !== sanitizedName && device.archived !== true
+      .filter(
+        (device) =>
+          device.name.sanitized !== sanitizedName && device.archived !== true,
       )
       .filter((device) => {
         // Same brand or same price category
@@ -259,7 +301,7 @@ export class DeviceService {
       .slice(0, limit);
   }
 
-  public async getPersonalPicks(amount: number = 5): Promise<Device[]> {
+  public async getPersonalPicks(amount: number = 4): Promise<Device[]> {
     const personalPickTag = await this.getTagBySlug("personal-pick");
     if (!personalPickTag) return [];
 
@@ -271,7 +313,7 @@ export class DeviceService {
     return result.items.map((device) => enhanceDeviceWithImageUrl(device));
   }
 
-  public async getNewArrivals(amount: number = 5): Promise<Device[]> {
+  public async getNewArrivals(amount: number = 4): Promise<Device[]> {
     const result = await this.pocketBaseService.getList("devices", 1, amount, {
       filter: "archived != true",
       sort: "-deviceData.released.mentionedDate",
@@ -281,85 +323,84 @@ export class DeviceService {
   }
 
   public async getUpcoming(amount: number = 5): Promise<Device[]> {
-    const allUpcomingResult = await this.pocketBaseService.getList(
-      "devices",
-      1,
-      100,
-      {
-        filter: `deviceData.released ~ 'upcoming' && archived != true`,
-        sort: "",
-        expand: "",
-      },
-    );
+    // const allUpcomingResult = await this.pocketBaseService.getList(
+    //   "devices",
+    //   1,
+    //   100,
+    //   {
+    //     filter: `deviceData.released ~ 'upcoming' && archived != true`,
+    //     sort: "",
+    //     expand: "",
+    //   },
+    // );
 
-    const allUpcomingDevices = allUpcomingResult.items.map((device) =>
-      enhanceDeviceWithImageUrl(device)
-    );
+    // const allUpcomingDevices = allUpcomingResult.items.map((device) =>
+    //   enhanceDeviceWithImageUrl(device),
+    // );
 
-    const handheldDevices = allUpcomingDevices
-      .filter((d) => d.deviceType === "handheld")
-      .sort((a, b) => a.index - b.index);
+    // const handheldDevices = allUpcomingDevices
+    //   .filter((d) => d.deviceType === "handheld")
+    //   .sort((a, b) => a.index - b.index);
 
-    const oemDevices = allUpcomingDevices
-      .filter((d) => d.deviceType === "oem")
-      .sort((a, b) => a.index - b.index);
+    // const oemDevices = allUpcomingDevices
+    //   .filter((d) => d.deviceType === "oem")
+    //   .sort((a, b) => a.index - b.index);
 
-    const selectedHandhelds = handheldDevices.slice(0, 3);
-    const selectedOEMs = oemDevices.slice(0, 2);
+    // const selectedHandhelds = handheldDevices.slice(0, 3);
+    // const selectedOEMs = oemDevices.slice(0, 2);
 
-    let remainingSlots = amount - selectedHandhelds.length -
-      selectedOEMs.length;
-    let additionalHandhelds: Device[] = [];
-    let additionalOEMs: Device[] = [];
+    // let remainingSlots =
+    //   amount - selectedHandhelds.length - selectedOEMs.length;
+    // let additionalHandhelds: Device[] = [];
+    // let additionalOEMs: Device[] = [];
 
-    if (remainingSlots > 0) {
-      if (selectedHandhelds.length < handheldDevices.length) {
-        const handheldsNeeded = Math.min(
-          remainingSlots,
-          handheldDevices.length - selectedHandhelds.length,
-        );
-        additionalHandhelds = handheldDevices.slice(
-          selectedHandhelds.length,
-          selectedHandhelds.length + handheldsNeeded,
-        );
-        remainingSlots -= handheldsNeeded;
-      }
+    // if (remainingSlots > 0) {
+    //   if (selectedHandhelds.length < handheldDevices.length) {
+    //     const handheldsNeeded = Math.min(
+    //       remainingSlots,
+    //       handheldDevices.length - selectedHandhelds.length,
+    //     );
+    //     additionalHandhelds = handheldDevices.slice(
+    //       selectedHandhelds.length,
+    //       selectedHandhelds.length + handheldsNeeded,
+    //     );
+    //     remainingSlots -= handheldsNeeded;
+    //   }
 
-      if (remainingSlots > 0 && selectedOEMs.length < oemDevices.length) {
-        const oemsNeeded = Math.min(
-          remainingSlots,
-          oemDevices.length - selectedOEMs.length,
-        );
-        additionalOEMs = oemDevices.slice(
-          selectedOEMs.length,
-          selectedOEMs.length + oemsNeeded,
-        );
-      }
-    }
+    //   if (remainingSlots > 0 && selectedOEMs.length < oemDevices.length) {
+    //     const oemsNeeded = Math.min(
+    //       remainingSlots,
+    //       oemDevices.length - selectedOEMs.length,
+    //     );
+    //     additionalOEMs = oemDevices.slice(
+    //       selectedOEMs.length,
+    //       selectedOEMs.length + oemsNeeded,
+    //     );
+    //   }
+    // }
 
-    return [
-      ...selectedHandhelds,
-      ...additionalHandhelds,
-      ...selectedOEMs,
-      ...additionalOEMs,
-    ];
+    // return [
+    //   ...selectedHandhelds,
+    //   ...additionalHandhelds,
+    //   ...selectedOEMs,
+    //   ...additionalOEMs,
+    // ];
+
+    return [];
   }
 
   public async getBangForYourBuck(): Promise<Device[]> {
-    const baseFilter =
-      `totalRating > 0 && deviceData.released.raw!~"upcoming" && deviceData.deviceType = "handheld" && archived != true`;
+    const baseFilter = `totalRating > 0 && deviceData.released.raw !~ "upcoming" && deviceData.deviceType = "handheld" && archived != true`;
 
     const [sweetSpotResult, midResult] = await Promise.all([
       this.pocketBaseService.getList("devices", 1, 3, {
-        filter:
-          `${baseFilter} && pricing.average >= 100 && pricing.average <= 200`,
-        sort: "-released,-totalRating",
+        filter: `${baseFilter} && pricing.average >= 100 && pricing.average <= 200`,
+        sort: "-deviceData.released.mentionedDate,-totalRating",
         expand: "",
       }),
       this.pocketBaseService.getList("devices", 1, 5, {
-        filter:
-          `${baseFilter} && pricing.average > 200 && pricing.average <= 500`,
-        sort: "-released,-totalRating",
+        filter: `${baseFilter} && pricing.average > 200 && pricing.average <= 500`,
+        sort: "-deviceData.released.mentionedDate,-totalRating",
         expand: "",
       }),
     ]);
@@ -386,7 +427,20 @@ export class DeviceService {
       const tagsMerged = tags
         .concat(tag)
         .filter((t, i, arr) => arr.findIndex((e) => e.id === t.id) === i);
-      this.tagsCache = { data: tagsMerged, timestamp: now };
+      const cacheEntry = { data: tagsMerged, timestamp: now };
+
+      // Update in-memory cache
+      this.tagsCache = cacheEntry;
+
+      // Update AsyncStorage cache
+      try {
+        await AsyncStorage.setItem(
+          this.TAGS_CACHE_KEY,
+          JSON.stringify(cacheEntry),
+        );
+      } catch (error) {
+        console.error("Error saving tags to AsyncStorage cache:", error);
+      }
     }
     return tag;
   }

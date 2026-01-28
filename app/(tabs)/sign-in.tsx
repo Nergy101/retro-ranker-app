@@ -26,8 +26,7 @@ import pkceSessionService from "../../services/auth/pkce.service";
 import { colors } from "../../theme/colors";
 import * as Linking from "expo-linking";
 import Constants from "expo-constants";
-
-const API_BASE_URL = "https://retroranker.site";
+import { API_BASE_URL } from "../../utils/constants";
 
 function getMobileRedirectUrl(provider: "google" | "discord"): string {
   // Expo Go needs an exp://... style URL (Safari can open it back into Expo Go).

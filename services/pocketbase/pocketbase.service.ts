@@ -224,7 +224,15 @@ export class PocketBaseService {
       return result;
     } catch (error: unknown) {
       if (error instanceof ClientResponseError) {
-        console.error(`Error fetching ${collection}:`, error.message);
+        console.error(`Error fetching ${collection}:`, {
+          message: error.message,
+          status: error.status,
+          statusText: error.statusText,
+          url: error.url,
+          response: error.response?.data || error.response,
+        });
+      } else {
+        console.error(`Unexpected error fetching ${collection}:`, error);
       }
       throw error;
     }

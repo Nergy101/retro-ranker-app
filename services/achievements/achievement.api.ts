@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://retroranker.site";
+import { API_BASE_URL } from "../../utils/constants";
 
 export interface AchievementCheckResponse {
   success: boolean;

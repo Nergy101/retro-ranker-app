@@ -77,8 +77,8 @@ export default function ComparePage() {
       } else {
         // If on main compare page, allow tab navigation
         if (event.translationX > swipeThreshold) {
-          // Swipe right - go to previous tab (Home)
-          router.push("/(tabs)/");
+          // Swipe right - go to previous tab (Search)
+          router.push("/(tabs)/search");
         } else if (event.translationX < -swipeThreshold) {
           // Swipe left - go to next tab (Profile)
           router.push("/(tabs)/profile");

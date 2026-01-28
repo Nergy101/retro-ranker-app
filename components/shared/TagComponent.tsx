@@ -1,5 +1,5 @@
 import React from "react";
-import { Badge, Pressable, Text, HStack } from "native-base";
+import { Badge, HStack, Pressable, Text } from "native-base";
 import { Feather } from "@expo/vector-icons";
 import { TAG_FRIENDLY_NAMES, TagModel } from "../../types/tag.model";
 import { colors } from "../../theme/colors";
@@ -13,13 +13,13 @@ interface TagComponentProps {
   onRemove?: () => void;
 }
 
-export function TagComponent({ 
-  tag, 
-  size = "xs", 
-  onPress, 
+export function TagComponent({
+  tag,
+  size = "xs",
+  onPress,
   isSelected = false,
   showRemoveIcon = false,
-  onRemove
+  onRemove,
 }: TagComponentProps) {
   const fontSize = size === "xs" ? "xs" : size === "sm" ? "sm" : "md";
 
@@ -36,7 +36,10 @@ export function TagComponent({
       mb={1.5}
     >
       <HStack alignItems="center" space={1}>
-        <Text fontSize={fontSize} color={isSelected ? colors.textPrimary : colors.primary}>
+        <Text
+          fontSize={fontSize}
+          color={isSelected ? colors.textPrimary : colors.primary}
+        >
           {tag.name}
         </Text>
         {showRemoveIcon && onRemove && (
@@ -48,7 +51,11 @@ export function TagComponent({
             p={0.5}
             ml={0.5}
           >
-            <Feather name="x" size={10} color={isSelected ? colors.textPrimary : colors.primary} />
+            <Feather
+              name="x"
+              size={10}
+              color={isSelected ? colors.textPrimary : colors.primary}
+            />
           </Pressable>
         )}
       </HStack>

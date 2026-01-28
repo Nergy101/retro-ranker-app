@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Box, Button, HStack, Pressable, Text, VStack } from "native-base";
+import { Feather } from "@expo/vector-icons";
 import { colors } from "../../theme/colors";
 
 interface DeviceSearchFormProps {
@@ -45,6 +46,25 @@ export function DeviceSearchForm({
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
+  // Sync internal state with prop changes (for navigation)
+  useEffect(() => {
+    if (initialSort !== sortBy) {
+      setSortBy(initialSort);
+    }
+  }, [initialSort]);
+
+  useEffect(() => {
+    if (initialCategory !== category) {
+      setCategory(initialCategory);
+    }
+  }, [initialCategory]);
+
+  useEffect(() => {
+    if (initialFilter !== filter) {
+      setFilter(initialFilter);
+    }
+  }, [initialFilter]);
+
   // Auto-trigger search when any filter changes
   useEffect(() => {
     onSearch({ query: "", category, sortBy, filter });
@@ -71,13 +91,16 @@ export function DeviceSearchForm({
           p={3}
         >
           <HStack justifyContent="space-between" alignItems="center">
-            <Text
-              color={colors.textPrimary}
-              fontSize="sm"
-              fontWeight="semibold"
-            >
-              More Filters
-            </Text>
+            <HStack alignItems="center" space={2}>
+              <Feather name="sliders" size={16} color={colors.textPrimary} />
+              <Text
+                color={colors.textPrimary}
+                fontSize="sm"
+                fontWeight="semibold"
+              >
+                More Filters
+              </Text>
+            </HStack>
             <Text color={colors.primary} fontSize="sm">
               {isExpanded ? "▲" : "▼"}
             </Text>

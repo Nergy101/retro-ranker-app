@@ -152,7 +152,12 @@ export default function CollectionDetailPage() {
                 {Array.from({
                   length: Math.ceil(collection.devices.length / 2),
                 }).map((_, rowIndex) => (
-                  <HStack key={rowIndex} space={3} width="100%" alignItems="stretch">
+                  <HStack
+                    key={rowIndex}
+                    space={3}
+                    width="100%"
+                    alignItems="stretch"
+                  >
                     {collection.devices
                       .slice(rowIndex * 2, rowIndex * 2 + 2)
                       .map((device) => (

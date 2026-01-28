@@ -24,7 +24,9 @@ import { TagComponent } from "../../components/shared/TagComponent";
 import { EmulationCapabilities } from "../../components/devices/EmulationCapabilities";
 import { SpecSummary } from "../../components/specifications/SpecSummary";
 import { FullSpecs } from "../../components/specifications/FullSpecs";
+import { RateLimitError } from "../../components/errors/RateLimitError";
 import { colors } from "../../theme/colors";
+import { getRateLimitInfo, getErrorMessage } from "../../utils/error-utils";
 
 const styles = StyleSheet.create({
   gridContainer: {
@@ -46,6 +48,9 @@ export default function DeviceDetailPage() {
   const [similarDevices, setSimilarDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [rateLimitError, setRateLimitError] = useState<{
+    retryAfterMinutes: number;
+  } | null>(null);
 
   const deviceService = DeviceService.getInstance();
 
@@ -85,8 +90,18 @@ export default function DeviceDetailPage() {
 
       setDevice(deviceData);
       setSimilarDevices(similar);
+      // Clear any previous errors on successful load
+      setRateLimitError(null);
+      setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load device");
+      const rateLimitInfo = getRateLimitInfo(err);
+      if (rateLimitInfo) {
+        setRateLimitError({ retryAfterMinutes: rateLimitInfo.retryAfterMinutes });
+        setError(null);
+      } else {
+        setError(getErrorMessage(err));
+        setRateLimitError(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -98,6 +113,15 @@ export default function DeviceDetailPage() {
         <Spinner size={8} color={colors.primary} />
         <Text color={colors.textSecondary} mt={4}>Loading device...</Text>
       </Center>
+    );
+  }
+
+  if (rateLimitError) {
+    return (
+      <RateLimitError
+        retryAfterMinutes={rateLimitError.retryAfterMinutes}
+        onRetry={loadDevice}
+      />
     );
   }
 
@@ -166,7 +190,7 @@ export default function DeviceDetailPage() {
                     tag={tag}
                     size="xs"
                     onPress={async () => {
-                      // Store tagId in AsyncStorage for the home page to read
+                      // Store tagId in AsyncStorage for the search page to read
                       // Use id if available, otherwise use slug
                       const tagIdentifier = tag.id || tag.slug;
                       if (tagIdentifier) {
@@ -175,8 +199,11 @@ export default function DeviceDetailPage() {
                             "selectedTagId",
                             tagIdentifier,
                           );
-                          // Navigate to home tab
-                          router.push("/(tabs)/");
+                          // Navigate to search tab with tagId param
+                          router.push({
+                            pathname: "/(tabs)/search",
+                            params: { tagId: tagIdentifier },
+                          });
                         } catch (error) {
                           console.error("Error storing tagId:", error);
                         }

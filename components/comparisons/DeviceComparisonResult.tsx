@@ -1,5 +1,13 @@
 import React from "react";
-import { Badge, Box, HStack, Image, Pressable, Text, VStack } from "native-base";
+import {
+  Badge,
+  Box,
+  HStack,
+  Image,
+  Pressable,
+  Text,
+  VStack,
+} from "native-base";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Device } from "../../types/device.model";
@@ -95,7 +103,11 @@ export function DeviceComparisonResult(
             {device.pricing.average && (
               <HStack alignItems="center" space={1} mt={1}>
                 <Feather name="dollar-sign" size={16} color={colors.primary} />
-                <Text fontSize="md" color={colors.primary} fontWeight="semibold">
+                <Text
+                  fontSize="md"
+                  color={colors.primary}
+                  fontWeight="semibold"
+                >
                   {device.pricing.average}
                 </Text>
               </HStack>
@@ -104,7 +116,12 @@ export function DeviceComparisonResult(
         </Box>
 
         {/* Rankings Section */}
-        <Box p={4} bg={colors.background} borderTopWidth={1} borderTopColor={colors.border}>
+        <Box
+          p={4}
+          bg={colors.background}
+          borderTopWidth={1}
+          borderTopColor={colors.border}
+        >
           <VStack space={3}>
             <Text
               fontSize="sm"
@@ -157,7 +174,12 @@ export function DeviceComparisonResult(
         </Box>
 
         {/* Spec Summary Section */}
-        <Box p={4} bg={colors.backgroundCard} borderTopWidth={1} borderTopColor={colors.border}>
+        <Box
+          p={4}
+          bg={colors.backgroundCard}
+          borderTopWidth={1}
+          borderTopColor={colors.border}
+        >
           <SpecSummary device={device} />
         </Box>
       </VStack>

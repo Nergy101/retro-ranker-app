@@ -30,6 +30,20 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="search"
+        options={{
+          title: "Search",
+          tabBarIcon: ({ color, size, focused }) => (
+            <TabBarIcon
+              name="search"
+              color={color}
+              size={size}
+              focused={focused}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="compare"
         options={{
           title: "Compare",
@@ -71,7 +85,7 @@ export default function TabLayout() {
 // Simple icon component - can be replaced with react-native-vector-icons later
 function TabBarIcon(
   { name, color, size, focused }: {
-    name: "home" | "compare" | "profile";
+    name: "home" | "search" | "compare" | "profile";
     color: string;
     size: number;
     focused: boolean;
@@ -82,6 +96,7 @@ function TabBarIcon(
     React.ComponentProps<typeof Feather>["name"]
   > = {
     home: "home",
+    search: "search",
     compare: "git-pull-request",
     profile: "user",
   };

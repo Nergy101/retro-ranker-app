@@ -4,8 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { colors } from "../../../theme/colors";
 import { useAuth } from "../../../contexts/AuthContext";
 import pkceSessionService from "../../../services/auth/pkce.service";
-
-const API_BASE_URL = "https://retroranker.site";
+import { API_BASE_URL } from "../../../utils/constants";
 
 export default function OAuthCallbackScreen() {
   const router = useRouter();
@@ -26,7 +25,7 @@ export default function OAuthCallbackScreen() {
     if (authLoading || !signInWithOAuth) {
       return;
     }
-    
+
     // If already running or done, don't run again
     if (processingRef.current !== "idle") {
       console.log(
