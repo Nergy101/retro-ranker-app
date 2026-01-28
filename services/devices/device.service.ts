@@ -394,12 +394,12 @@ export class DeviceService {
 
     const [sweetSpotResult, midResult] = await Promise.all([
       this.pocketBaseService.getList("devices", 1, 3, {
-        filter: `${baseFilter} && pricing.average >= 100 && pricing.average <= 200`,
+        filter: `${baseFilter} && deviceData.pricing.average >= 100 && deviceData.pricing.average <= 200`,
         sort: "-deviceData.released.mentionedDate,-totalRating",
         expand: "",
       }),
       this.pocketBaseService.getList("devices", 1, 5, {
-        filter: `${baseFilter} && pricing.average > 200 && pricing.average <= 500`,
+        filter: `${baseFilter} && deviceData.pricing.average > 200 && deviceData.pricing.average <= 500`,
         sort: "-deviceData.released.mentionedDate,-totalRating",
         expand: "",
       }),

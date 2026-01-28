@@ -47,17 +47,21 @@ export default function SearchPage() {
   const localParams = useLocalSearchParams<{
     tagId?: string | string[];
     sortBy?: string | string[];
+    category?: string | string[];
   }>();
   const globalParams = useGlobalSearchParams<{
     tagId?: string | string[];
     sortBy?: string | string[];
+    category?: string | string[];
   }>();
   // Use global params for cross-route navigation, fallback to local
   const tagIdParam = globalParams.tagId || localParams.tagId;
   const sortByParam = globalParams.sortBy || localParams.sortBy;
+  const categoryParam = globalParams.category || localParams.category;
   const params = {
     tagId: Array.isArray(tagIdParam) ? tagIdParam[0] : tagIdParam,
     sortBy: Array.isArray(sortByParam) ? sortByParam[0] : sortByParam,
+    category: Array.isArray(categoryParam) ? categoryParam[0] : categoryParam,
   };
   const screenWidth = Dimensions.get("window").width;
   const insets = useSafeAreaInsets();
@@ -87,7 +91,7 @@ export default function SearchPage() {
 
   const [searchParams, setSearchParams] = useState({
     query: "",
-    category: "all" as "all" | "low" | "mid" | "high",
+    category: (params.category || "all") as "all" | "low" | "mid" | "high",
     sortBy: params.sortBy || "all",
     filter: "all" as "all" | "upcoming" | "personal-picks",
   });
@@ -152,6 +156,20 @@ export default function SearchPage() {
     }
   }, [params.sortBy]);
 
+  // Handle category parameter changes
+  useEffect(() => {
+    const category = Array.isArray(params.category)
+      ? params.category[0]
+      : params.category;
+    if (category) {
+      setSearchParams((prev) => ({
+        ...prev,
+        category: category as "all" | "low" | "mid" | "high",
+      }));
+      setPageNumber(1);
+    }
+  }, [params.category]);
+
   // Handle tagId when allTags loads (check both params and AsyncStorage)
   useEffect(() => {
     // Handle tagId as string or array (Expo Router can return either)
@@ -180,6 +198,22 @@ export default function SearchPage() {
         setPageNumber(1);
       }
     }, [params.sortBy]),
+  );
+
+  // Handle category when screen comes into focus (for navigation from other screens)
+  useFocusEffect(
+    React.useCallback(() => {
+      const category = Array.isArray(params.category)
+        ? params.category[0]
+        : params.category;
+      if (category) {
+        setSearchParams((prev) => ({
+          ...prev,
+          category: category as "all" | "low" | "mid" | "high",
+        }));
+        setPageNumber(1);
+      }
+    }, [params.category]),
   );
 
   // Handle tagId when screen comes into focus (for navigation from other screens)

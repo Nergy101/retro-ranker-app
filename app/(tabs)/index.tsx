@@ -36,6 +36,7 @@ export default function HomePage() {
     } | null
   >(null);
   const [newArrivals, setNewArrivals] = useState<Device[]>([]);
+  const [bangForYourBuck, setBangForYourBuck] = useState<Device[]>([]);
   const [personalPicks, setPersonalPicks] = useState<Device[]>([]);
   const [personalPickTagId, setPersonalPickTagId] = useState<string | null>(
     null,
@@ -58,13 +59,15 @@ export default function HomePage() {
       setLoading(true);
 
       // Load all device sections in parallel and get personal-pick tag
-      const [arrivals, picks, personalPickTag] = await Promise.all([
+      const [arrivals, bang, picks, personalPickTag] = await Promise.all([
         deviceService.getNewArrivals(),
+        deviceService.getBangForYourBuck(),
         deviceService.getPersonalPicks(),
         deviceService.getTagBySlug("personal-pick"),
       ]);
 
       setNewArrivals(arrivals);
+      setBangForYourBuck(bang);
       setPersonalPicks(picks);
       if (personalPickTag) {
         setPersonalPickTagId(personalPickTag.id);
@@ -240,6 +243,19 @@ export default function HomePage() {
                 router.push({
                   pathname: "/(tabs)/search",
                   params: { sortBy: "new-arrivals" },
+                }),
+            )}
+
+            {/* Bang for Your Buck Section */}
+            {renderDeviceSection(
+              "Bang for Your Buck",
+              "dollar-sign",
+              bangForYourBuck,
+              "More Bang for Your Buck",
+              () =>
+                router.push({
+                  pathname: "/(tabs)/search",
+                  params: { sortBy: "highly-ranked", category: "mid" },
                 }),
             )}
 
