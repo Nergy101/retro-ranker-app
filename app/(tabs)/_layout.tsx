@@ -19,8 +19,8 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon name="home" color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <TabBarIcon name="home" color={color} size={size} focused={focused} />
           ),
         }}
       />
@@ -28,8 +28,13 @@ export default function TabLayout() {
         name="compare"
         options={{
           title: 'Compare',
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon name="compare" color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <TabBarIcon
+              name="compare"
+              color={color}
+              size={size}
+              focused={focused}
+            />
           ),
         }}
       />
@@ -37,8 +42,13 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon name="profile" color={color} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <TabBarIcon
+              name="profile"
+              color={color}
+              size={size}
+              focused={focused}
+            />
           ),
         }}
       />
@@ -47,12 +57,14 @@ export default function TabLayout() {
 }
 
 // Simple icon component - can be replaced with react-native-vector-icons later
-function TabBarIcon({ name, color }: { name: string; color: string }) {
+function TabBarIcon(
+  { name, size }: { name: string; color: string; size: number; focused: boolean },
+) {
   // Placeholder - using emoji for now
   const icons: Record<string, string> = {
     home: '🏠',
     compare: '⚖️',
     profile: '👤',
   };
-  return <Text style={{ fontSize: 24 }}>{icons[name] || '•'}</Text>;
+  return <Text style={{ fontSize: size }}>{icons[name] || '•'}</Text>;
 }

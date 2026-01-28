@@ -125,8 +125,10 @@ export default function HomePage() {
         pageSize,
       );
       
-      // Filter out devices with no image, no pricing, and no release date
+      // Filter out archived devices + ones with no image/pricing/release date
       const filteredDevices = result.page.filter((device) => {
+        if (device.archived === true) return false;
+
         const hasImage = device.image?.pocketbaseUrl || device.image?.webpUrl;
         const hasPricing = device.pricing.average || device.pricing.range;
         const releaseDate = device.released?.raw?.toLowerCase() || '';

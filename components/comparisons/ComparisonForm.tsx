@@ -27,7 +27,7 @@ export function ComparisonForm({ onCompare }: ComparisonFormProps) {
     const searchDevices = async () => {
       if (queryA.length > 0) {
         const results = await deviceService.searchDevices(queryA, 'all', 'all', 'all', [], 1, 5);
-        setSuggestionsA(results.page);
+        setSuggestionsA(results.page.filter((d) => d.archived !== true));
         setShowSuggestionsA(true);
       } else {
         setSuggestionsA([]);
@@ -43,7 +43,7 @@ export function ComparisonForm({ onCompare }: ComparisonFormProps) {
     const searchDevices = async () => {
       if (queryB.length > 0) {
         const results = await deviceService.searchDevices(queryB, 'all', 'all', 'all', [], 1, 5);
-        setSuggestionsB(results.page);
+        setSuggestionsB(results.page.filter((d) => d.archived !== true));
         setShowSuggestionsB(true);
       } else {
         setSuggestionsB([]);

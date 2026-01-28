@@ -10,15 +10,27 @@ import {
   Image,
 } from 'native-base';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Linking } from 'react-native';
+import { Linking as ReactNativeLinking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
 import { generateCodeVerifier, generateCodeChallenge } from '../../services/auth/pkce.service';
 import pkceSessionService from '../../services/auth/pkce.service';
 import { colors } from '../../theme/colors';
-import * as Constants from 'expo-constants';
+import * as Linking from 'expo-linking';
+import Constants from 'expo-constants';
 
 const API_BASE_URL = 'https://retroranker.site';
+
+function getMobileRedirectUrl(provider: 'google' | 'discord'): string {
+  // Expo Go needs an exp://... style URL (Safari can open it back into Expo Go).
+  if (Constants.appOwnership === 'expo' && Constants.linkingUri) {
+    // Constants.linkingUri typically ends with "/--/" in Expo Go.
+    return `${Constants.linkingUri}auth/${provider}/callback`;
+  }
+
+  // Standalone/dev builds: use the app scheme from app.json (`retroranker://...`).
+  return Linking.createURL(`auth/${provider}/callback`);
+}
 
 export default function SignInScreen() {
   const router = useRouter();
@@ -45,9 +57,11 @@ export default function SignInScreen() {
             throw new Error('Invalid OAuth session');
           }
 
-          const scheme = Constants.expoConfig?.scheme || 'retroranker';
-          const redirectUrl = `${scheme}://auth/${provider}/callback`;
-          await signInWithOAuth(provider, code, codeVerifier, redirectUrl);
+          // This must match the redirect_uri used for the provider's authorization code.
+          // Our server uses an HTTPS website callback for Discord/Google, so we must use that
+          // when exchanging the code for tokens with PocketBase.
+          const websiteCallbackUrl = `${API_BASE_URL}/api/auth/${provider}/callback`;
+          await signInWithOAuth(provider, code, codeVerifier, websiteCallbackUrl);
           
           // Navigate to profile on success
           router.replace('/(tabs)/profile');
@@ -63,20 +77,22 @@ export default function SignInScreen() {
     if (params.code && params.state) {
       const provider = params.provider as 'google' | 'discord' | undefined;
       if (provider) {
-        const callbackUrl = `${Constants.expoConfig?.scheme}://auth/${provider}/callback?code=${params.code}&state=${params.state}`;
+        const callbackUrl = Linking.createURL(`auth/${provider}/callback`, {
+          queryParams: { code: String(params.code), state: String(params.state) },
+        });
         handleDeepLink(callbackUrl);
       }
     }
 
     // Listen for deep links
-    const subscription = Linking.addEventListener('url', (event) => {
+    const subscription = ReactNativeLinking.addEventListener('url', (event) => {
       if (event.url.includes('/auth/')) {
         handleDeepLink(event.url);
       }
     });
 
     // Check for initial URL (app opened via deep link)
-    Linking.getInitialURL().then((url) => {
+    ReactNativeLinking.getInitialURL().then((url) => {
       if (url && url.includes('/auth/')) {
         handleDeepLink(url);
       }
@@ -110,22 +126,24 @@ export default function SignInScreen() {
 
       await pkceSessionService.storeInSession(state, codeVerifier);
 
-      const scheme = Constants.expoConfig?.scheme || 'retroranker';
-      const redirectUrl = `${scheme}://auth/${provider}/callback`;
+      // This is the URL the server will redirect to after completing OAuth.
+      // In Expo Go, this becomes an exp://... URL that iOS can open.
+      // In a standalone/dev build, this becomes retroranker://... (based on `app.json` scheme).
+      const redirectUrl = getMobileRedirectUrl(provider);
       
       // Pass redirect_uri to server so it knows to redirect back to app
       const encodedRedirectUrl = encodeURIComponent(redirectUrl);
       let oauthUrl: string;
       if (provider === 'google') {
-        oauthUrl = `${API_BASE_URL}/api/auth/google?state=${state}&redirect_uri=${encodedRedirectUrl}`;
+        oauthUrl = `${API_BASE_URL}/api/auth/google?state=${state}&code_challenge=${encodeURIComponent(codeChallenge)}&redirect_uri=${encodedRedirectUrl}`;
       } else {
-        oauthUrl = `${API_BASE_URL}/api/auth/discord?state=${state}&redirect_uri=${encodedRedirectUrl}`;
+        oauthUrl = `${API_BASE_URL}/api/auth/discord?state=${state}&code_challenge=${encodeURIComponent(codeChallenge)}&redirect_uri=${encodedRedirectUrl}`;
       }
 
       // Open OAuth URL in browser
-      const canOpen = await Linking.canOpenURL(oauthUrl);
+      const canOpen = await ReactNativeLinking.canOpenURL(oauthUrl);
       if (canOpen) {
-        await Linking.openURL(oauthUrl);
+        await ReactNativeLinking.openURL(oauthUrl);
       } else {
         throw new Error('Cannot open OAuth URL');
       }
