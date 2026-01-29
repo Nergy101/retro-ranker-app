@@ -103,6 +103,27 @@ export default function ProfilePage() {
     loadCollections();
   }, [loadAchievements, loadFavorites, loadCollections]);
 
+  // Memoize welcome text so it only generates once per page load (must be before any conditional return)
+  const welcomeText = useMemo(() => {
+    const texts = [
+      "Player One",
+      "Hero",
+      "Continue",
+      "Back for More",
+      "Let's Go",
+      "Back Online",
+      "Link Established",
+      "Respawned",
+      "Insert Snacks",
+      "Boot Complete",
+      "Memory Card",
+      "Retro XP",
+      "Retro Vibes",
+      "Handheld Dimension",
+    ];
+    return texts[Math.floor(Math.random() * texts.length)];
+  }, []);
+
   if (loading) {
     return (
       <Box flex={1} bg={colors.background}>
@@ -159,27 +180,6 @@ export default function ProfilePage() {
       setCheckingAchievements(false);
     }
   };
-
-  // Memoize welcome text so it only generates once per page load
-  const welcomeText = useMemo(() => {
-    const texts = [
-      "Player One",
-      "Hero",
-      "Continue",
-      "Back for More",
-      "Let's Go",
-      "Back Online",
-      "Link Established",
-      "Respawned",
-      "Insert Snacks",
-      "Boot Complete",
-      "Memory Card",
-      "Retro XP",
-      "Retro Vibes",
-      "Handheld Dimension",
-    ];
-    return texts[Math.floor(Math.random() * texts.length)];
-  }, []); // Empty dependency array means it only runs once on mount
 
   // Swipe gesture handler for tab navigation
   const swipeGesture = Gesture.Pan()

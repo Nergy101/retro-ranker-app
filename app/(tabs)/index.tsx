@@ -22,6 +22,8 @@ import { colors } from "../../theme/colors";
 import { Device } from "../../types/device.model";
 import { getErrorMessage, getRateLimitInfo } from "../../utils/error-utils";
 
+const appVersion = require("../../package.json").version;
+
 export default function HomePage() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -211,6 +213,17 @@ export default function HomePage() {
   return (
     <GestureDetector gesture={swipeGesture}>
       <Box flex={1} bg={colors.background}>
+        {/* Version - top right */}
+        <Box
+          position="absolute"
+          top={Math.max(insets.top, 16)}
+          right={4}
+          zIndex={1}
+        >
+          <Text fontSize="xs" color={colors.textSecondary}>
+            v{appVersion}
+          </Text>
+        </Box>
         <ScrollView>
           <VStack space={4} pt={Math.max(insets.top, 16)}>
             {/* Logo Section */}

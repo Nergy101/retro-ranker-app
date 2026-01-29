@@ -1,6 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Center, Spinner, Text, VStack } from "native-base";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import {
+  useLocalSearchParams,
+  useRootNavigationState,
+  useRouter,
+} from "expo-router";
 import { colors } from "../../../theme/colors";
 import { useAuth } from "../../../contexts/AuthContext";
 import pkceSessionService from "../../../services/auth/pkce.service";
@@ -8,6 +12,7 @@ import { API_BASE_URL } from "../../../utils/constants";
 
 export default function OAuthCallbackScreen() {
   const router = useRouter();
+  const rootNavigationState = useRootNavigationState();
   const { signInWithOAuth, loading: authLoading, initialized } = useAuth();
   const { provider, code, state } = useLocalSearchParams<{
     provider?: string;
@@ -16,9 +21,21 @@ export default function OAuthCallbackScreen() {
   }>();
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState("Initializing...");
+  const [pendingRedirect, setPendingRedirect] = useState<string | null>(null);
 
   // Track processing state to handle StrictMode double-mount
   const processingRef = useRef<"idle" | "running" | "done">("idle");
+
+  // Defer navigation until root layout is mounted (fixes cold start / deep link)
+  useEffect(() => {
+    if (!rootNavigationState?.key || !pendingRedirect) return;
+    try {
+      router.replace(pendingRedirect);
+      setPendingRedirect(null);
+    } catch (navErr) {
+      console.error("[OAuth Callback] Navigation error:", navErr);
+    }
+  }, [rootNavigationState?.key, pendingRedirect, router]);
 
   useEffect(() => {
     // Wait for auth context to be fully initialized (important for cold start via deep link)
@@ -64,14 +81,7 @@ export default function OAuthCallbackScreen() {
         processingRef.current = "done";
         setError("Missing OAuth parameters");
         setStatus("Redirecting...");
-        // Use a longer delay for navigation to ensure UI is ready
-        setTimeout(() => {
-          try {
-            router.replace("/(tabs)/sign-in");
-          } catch (navErr) {
-            console.error("[OAuth Callback] Navigation error:", navErr);
-          }
-        }, 500);
+        setPendingRedirect("/(tabs)/sign-in");
         return;
       }
 
@@ -105,13 +115,7 @@ export default function OAuthCallbackScreen() {
           );
           processingRef.current = "done";
           setStatus("Session expired. Redirecting...");
-          setTimeout(() => {
-            try {
-              router.replace("/(tabs)/sign-in");
-            } catch (navErr) {
-              console.error("[OAuth Callback] Navigation error:", navErr);
-            }
-          }, 500);
+          setPendingRedirect("/(tabs)/sign-in");
           return;
         }
 
@@ -128,16 +132,7 @@ export default function OAuthCallbackScreen() {
         console.log("[OAuth Callback] Sign in successful!");
         processingRef.current = "done";
         setStatus("Success! Redirecting...");
-
-        // Navigate to profile on success - use slightly longer delay to ensure state is settled
-        setTimeout(() => {
-          try {
-            console.log("[OAuth Callback] Navigating to profile");
-            router.replace("/(tabs)/profile");
-          } catch (navErr) {
-            console.error("[OAuth Callback] Navigation error:", navErr);
-          }
-        }, 200);
+        setPendingRedirect("/(tabs)/profile");
       } catch (err) {
         console.error("[OAuth Callback] Error:", err);
         processingRef.current = "done";
@@ -146,13 +141,7 @@ export default function OAuthCallbackScreen() {
           : "OAuth failed";
         setError(errorMessage);
         setStatus("Login failed");
-        setTimeout(() => {
-          try {
-            router.replace("/(tabs)/sign-in");
-          } catch (navErr) {
-            console.error("[OAuth Callback] Navigation error:", navErr);
-          }
-        }, 2000);
+        setPendingRedirect("/(tabs)/sign-in");
       }
     };
 
