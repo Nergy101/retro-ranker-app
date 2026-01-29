@@ -1,3 +1,4 @@
+import { requireOptionalNativeModule } from "expo-modules-core";
 import React, {
   createContext,
   ReactNode,
@@ -26,11 +27,25 @@ interface NetworkProviderProps {
   children: ReactNode;
 }
 
+/** Native module may expose getNetworkStateAsync and addListener. */
+interface ExpoNetworkModule {
+  getNetworkStateAsync?: () => Promise<{
+    isConnected?: boolean;
+    isInternetReachable?: boolean;
+  }>;
+  addListener?: (
+    event: string,
+    listener: (payload: { isConnected?: boolean; isInternetReachable?: boolean }) => void
+  ) => { remove: () => void };
+}
+
+const NETWORK_STATE_EVENT = "onNetworkStateChanged";
+
 /**
  * Provides network state via Expo's expo-network when the native module is
- * available (development build). When running in Expo Go or before a native
- * rebuild, the native module is missing—we fall back to assuming online so
- * the app does not crash.
+ * available (development build). When the native module is missing (e.g. Expo Go
+ * or a dev client built before expo-network was added), we fall back to
+ * assuming online so the app does not crash.
  */
 export function NetworkProvider({ children }: NetworkProviderProps) {
   const [state, setState] = useState<NetworkState>({
@@ -39,13 +54,11 @@ export function NetworkProvider({ children }: NetworkProviderProps) {
   });
 
   useEffect(() => {
-    let Network: typeof import("expo-network") | null = null;
-    try {
-      Network = require("expo-network");
-    } catch {
-      return;
-    }
-    if (!Network?.getNetworkStateAsync || !Network?.addNetworkStateListener) {
+    const ExpoNetwork = requireOptionalNativeModule<ExpoNetworkModule>("ExpoNetwork");
+    if (
+      !ExpoNetwork?.getNetworkStateAsync ||
+      !ExpoNetwork?.addListener
+    ) {
       return;
     }
     const applyState = (next: { isConnected?: boolean; isInternetReachable?: boolean }) => {
@@ -54,10 +67,10 @@ export function NetworkProvider({ children }: NetworkProviderProps) {
         isInternetReachable: next.isInternetReachable ?? prev.isInternetReachable,
       }));
     };
-    Network.getNetworkStateAsync()
+    ExpoNetwork.getNetworkStateAsync()
       .then(applyState)
       .catch(() => {});
-    const sub = Network.addNetworkStateListener?.(applyState);
+    const sub = ExpoNetwork.addListener(NETWORK_STATE_EVENT, applyState);
     return () => {
       if (typeof sub?.remove === "function") sub.remove();
     };

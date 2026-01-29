@@ -9,8 +9,9 @@ import {
   VStack,
 } from "native-base";
 import { LinearGradient } from "expo-linear-gradient";
-import { Feather } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { Device } from "../../types/device.model";
+import { useAuth } from "../../contexts/AuthContext";
 import { getDeviceImageUrl } from "../../services/devices/device.service";
 import { EmulationBadge } from "../devices/EmulationBadge";
 import {
@@ -23,11 +24,13 @@ interface DeviceCardProps {
   device: Device;
   onPress?: () => void;
   imageOnly?: boolean;
+  isFavorited?: boolean;
 }
 
 export function DeviceCard(
-  { device, onPress, imageOnly = false }: DeviceCardProps,
+  { device, onPress, imageOnly = false, isFavorited = false }: DeviceCardProps,
 ) {
+  const { authenticated } = useAuth();
   const imageUrl = getDeviceImageUrl(device);
 
   const getPriceDisplay = () => {
@@ -201,6 +204,15 @@ export function DeviceCard(
                 {getPriceDisplay()}
               </HStack>
             </Box>
+            {authenticated && (
+              <Box position="absolute" top={2} right={2} zIndex={1}>
+                <Ionicons
+                  name={isFavorited ? "heart" : "heart-outline"}
+                  size={20}
+                  color={isFavorited ? colors.primary : colors.textSecondary}
+                />
+              </Box>
+            )}
           </Box>
 
           <VStack space={1} p={3}>

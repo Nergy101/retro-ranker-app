@@ -1,20 +1,24 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Box,
   Button,
   Center,
   HStack,
   Image,
+  Pressable,
   ScrollView,
   Spinner,
   Text,
   VStack,
 } from "native-base";
-import { Feather } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { Dimensions, StyleSheet, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAuth } from "../../contexts/AuthContext";
 import { useNetwork } from "../../contexts/NetworkContext";
+import { useFavoritedDeviceIds } from "../../hooks/useFavoritedDeviceIds";
+import { DeviceCollectionService } from "../../services/devices/device-collection.service";
 import {
   DeviceService,
   getDeviceImageUrl,
@@ -45,6 +49,8 @@ export default function DeviceDetailPage() {
   const router = useRouter();
   const navigation = useNavigation();
   const { isConnected } = useNetwork();
+  const { user, authenticated } = useAuth();
+  const { favoritedDeviceIds, refetch } = useFavoritedDeviceIds();
   const screenWidth = Dimensions.get("window").width;
   const [device, setDevice] = useState<Device | null>(null);
   const [similarDevices, setSimilarDevices] = useState<Device[]>([]);
@@ -54,17 +60,81 @@ export default function DeviceDetailPage() {
     retryAfterMinutes: number;
   } | null>(null);
   const [isCached, setIsCached] = useState(false);
+  const [togglingFavorite, setTogglingFavorite] = useState(false);
+  // Optimistic: flip heart immediately on tap; null = use server state
+  const [optimisticFavorited, setOptimisticFavorited] = useState<
+    boolean | null
+  >(null);
 
   const deviceService = DeviceService.getInstance();
+  const deviceCollectionService = DeviceCollectionService.getInstance();
 
-  // Update navigation title when device is loaded
+  const handleToggleFavorite = useCallback(async () => {
+    if (!device || !user?.id || togglingFavorite) return;
+    const currentFavorited =
+      optimisticFavorited ?? favoritedDeviceIds.has(device.id);
+    const nextFavorited = !currentFavorited;
+    setOptimisticFavorited(nextFavorited);
+    setTogglingFavorite(true);
+    try {
+      if (currentFavorited) {
+        await deviceCollectionService.removeFavorite(user.id, device.id);
+      } else {
+        await deviceCollectionService.addFavorite(user.id, device.id);
+      }
+      await refetch();
+      setOptimisticFavorited(null);
+    } catch (err) {
+      console.error("Error toggling favorite:", err);
+      setOptimisticFavorited(currentFavorited);
+    } finally {
+      setTogglingFavorite(false);
+    }
+  }, [
+    device,
+    user?.id,
+    togglingFavorite,
+    optimisticFavorited,
+    favoritedDeviceIds,
+    refetch,
+  ]);
+
+  const isFavoritedDisplay =
+    optimisticFavorited ?? (device ? favoritedDeviceIds.has(device.id) : false);
+
+  // Update navigation title and header heart when device is loaded
   useEffect(() => {
     if (device) {
       navigation.setOptions({
         title: `${device.brand.raw} ${device.name.raw}`,
+        ...(authenticated && {
+          headerRight: () => (
+            <Pressable
+              onPress={handleToggleFavorite}
+              disabled={togglingFavorite}
+              hitSlop={8}
+              p={2}
+            >
+              <Ionicons
+                name={isFavoritedDisplay ? "heart" : "heart-outline"}
+                size={24}
+                color={
+                  isFavoritedDisplay ? colors.primary : colors.textSecondary
+                }
+              />
+            </Pressable>
+          ),
+        }),
       });
     }
-  }, [device, navigation]);
+  }, [
+    device,
+    navigation,
+    authenticated,
+    isFavoritedDisplay,
+    togglingFavorite,
+    handleToggleFavorite,
+  ]);
 
   // Calculate card width for 2-column grid with gaps (same as home page)
   const cardGap = 12;
@@ -298,6 +368,9 @@ export default function DeviceDetailPage() {
                           router.push(
                             `/devices/${similarDevice.name.sanitized}`,
                           )}
+                        isFavorited={favoritedDeviceIds.has(
+                          similarDevice.id,
+                        )}
                       />
                     </View>
                   );

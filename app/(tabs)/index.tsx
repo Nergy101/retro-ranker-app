@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DeviceCard } from "../../components/cards/DeviceCard";
 import { RateLimitError } from "../../components/errors/RateLimitError";
 import { useNetwork } from "../../contexts/NetworkContext";
+import { useFavoritedDeviceIds } from "../../hooks/useFavoritedDeviceIds";
 import { DeviceService } from "../../services/devices/device.service";
 import { colors } from "../../theme/colors";
 import { Device } from "../../types/device.model";
@@ -31,6 +32,7 @@ export default function HomePage() {
   const screenWidth = Dimensions.get("window").width;
   const deviceService = DeviceService.getInstance();
   const { isConnected } = useNetwork();
+  const { favoritedDeviceIds } = useFavoritedDeviceIds();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -203,6 +205,7 @@ export default function HomePage() {
                   <DeviceCard
                     device={device}
                     onPress={() => handleDevicePress(device)}
+                    isFavorited={favoritedDeviceIds.has(device.id)}
                   />
                 </Box>
               </View>
@@ -239,19 +242,14 @@ export default function HomePage() {
   return (
     <GestureDetector gesture={swipeGesture}>
       <Box flex={1} bg={colors.background}>
-        {/* Version - top right */}
-        <Box
-          position="absolute"
-          top={Math.max(insets.top, 16)}
-          right={4}
-          zIndex={1}
-        >
-          <Text fontSize="xs" color={colors.textSecondary}>
-            v{appVersion}
-          </Text>
-        </Box>
         <ScrollView>
           <VStack space={4} pt={Math.max(insets.top, 16)}>
+            {/* Version - top right, scrolls with content */}
+            <Box px={4} alignItems="flex-end">
+              <Text fontSize="xs" color={colors.textSecondary}>
+                v{appVersion}
+              </Text>
+            </Box>
             {/* Logo Section */}
             <Box mb={1} px={4}>
               <HStack space={2} alignItems="center" justifyContent="center">

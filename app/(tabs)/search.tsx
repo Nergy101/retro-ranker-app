@@ -25,6 +25,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useNetwork } from "../../contexts/NetworkContext";
+import { useFavoritedDeviceIds } from "../../hooks/useFavoritedDeviceIds";
 import { DeviceService } from "../../services/devices/device.service";
 import { Device } from "../../types/device.model";
 import { TagModel } from "../../types/tag.model";
@@ -46,6 +47,7 @@ import {
 export default function SearchPage() {
   const router = useRouter();
   const { isConnected } = useNetwork();
+  const { favoritedDeviceIds } = useFavoritedDeviceIds();
   const localParams = useLocalSearchParams<{
     tagId?: string | string[];
     sortBy?: string | string[];
@@ -969,6 +971,7 @@ export default function SearchPage() {
                           <DeviceCard
                             device={device}
                             onPress={() => handleDevicePress(device)}
+                            isFavorited={favoritedDeviceIds.has(device.id)}
                           />
                         </Box>
                       </View>

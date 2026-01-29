@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Feather } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import {
   Badge,
   Box,
@@ -11,22 +12,22 @@ import {
   Text,
   VStack,
 } from "native-base";
-import { Feather } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Modal, TextInput, TouchableWithoutFeedback, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import { Dimensions } from "react-native";
-import { useAuth } from "../../contexts/AuthContext";
-import { colors } from "../../theme/colors";
-import { AchievementService } from "../../services/achievements/achievement.service";
-import { buildAchievementBoard } from "../../services/achievements/achievement.helpers";
-import { AchievementStatus } from "../../types/achievement.contract";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AchievementBoard } from "../../components/achievements/AchievementBoard";
-import { DeviceCollectionService } from "../../services/devices/device-collection.service";
-import { Device } from "../../types/device.model";
-import { DeviceCollection } from "../../types/device-collection";
 import { DeviceCard } from "../../components/cards/DeviceCard";
-import { DeviceCardRow } from "../../components/cards/DeviceCardRow";
+import { useAuth } from "../../contexts/AuthContext";
+import { useFavoritedDeviceIds } from "../../hooks/useFavoritedDeviceIds";
+import { buildAchievementBoard } from "../../services/achievements/achievement.helpers";
+import { AchievementService } from "../../services/achievements/achievement.service";
+import { DeviceCollectionService } from "../../services/devices/device-collection.service";
+import { createPocketBaseService } from "../../services/pocketbase/pocketbase.service";
+import { colors } from "../../theme/colors";
+import { AchievementStatus } from "../../types/achievement.contract";
+import { DeviceCollection } from "../../types/device-collection";
+import { Device } from "../../types/device.model";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -43,9 +44,37 @@ export default function ProfilePage() {
   const [deviceCollectionService] = useState(() =>
     DeviceCollectionService.getInstance()
   );
+  const { favoritedDeviceIds } = useFavoritedDeviceIds();
   const [favoritesExpanded, setFavoritesExpanded] = useState(false);
   const [achievementsExpanded, setAchievementsExpanded] = useState(false);
   const [collectionsExpanded, setCollectionsExpanded] = useState(false);
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+  const [feedbackText, setFeedbackText] = useState("");
+  const [feedbackSending, setFeedbackSending] = useState(false);
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
+
+  const handleSendFeedback = useCallback(async () => {
+    const trimmed = feedbackText.trim();
+    if (!trimmed || feedbackSending) return;
+    setFeedbackSending(true);
+    setFeedbackError(null);
+    try {
+      const pb = createPocketBaseService();
+      await pb.create("suggestions", {
+        suggestion: trimmed,
+        ...(user?.id && { user: user.id }),
+      });
+      setFeedbackText("");
+      setFeedbackModalOpen(false);
+    } catch (err) {
+      console.error("Error submitting feedback:", err);
+      setFeedbackError(
+        err instanceof Error ? err.message : "Failed to send feedback",
+      );
+    } finally {
+      setFeedbackSending(false);
+    }
+  }, [feedbackText, feedbackSending, user?.id]);
 
   const loadAchievements = useCallback(async () => {
     if (!authenticated || !user) return;
@@ -103,23 +132,30 @@ export default function ProfilePage() {
     loadCollections();
   }, [loadAchievements, loadFavorites, loadCollections]);
 
+  // When not authenticated and auth is settled, redirect to sign-in (no intermediate screen)
+  useEffect(() => {
+    if (!loading && !authenticated) {
+      router.replace("/(tabs)/sign-in");
+    }
+  }, [loading, authenticated, router]);
+
   // Memoize welcome text so it only generates once per page load (must be before any conditional return)
   const welcomeText = useMemo(() => {
     const texts = [
-      "Player One",
-      "Hero",
-      "Continue",
-      "Back for More",
-      "Let's Go",
-      "Back Online",
-      "Link Established",
-      "Respawned",
-      "Insert Snacks",
-      "Boot Complete",
-      "Memory Card",
-      "Retro XP",
-      "Retro Vibes",
-      "Handheld Dimension",
+      "Ready, Player One!",
+      "The Chosen Hero.",
+      "Continue >",
+      "Back for More?",
+      "Let's Go!",
+      "Back online?",
+      "Link established.",
+      "Respawned.",
+      "Snacks inserted.",
+      "Boot completed.",
+      "Memory Card Inserted.",
+      "Retro XP Gained.",
+      "Retro vibes activated.",
+      "Entered the handheld dimension.",
     ];
     return texts[Math.floor(Math.random() * texts.length)];
   }, []);
@@ -137,32 +173,12 @@ export default function ProfilePage() {
     );
   }
 
+  // When not authenticated, show brief spinner while redirect to sign-in happens
   if (!authenticated || !user) {
     return (
-      <Box flex={1} bg={colors.background}>
-        <Center flex={1} px={6}>
-          <VStack space={4} alignItems="center">
-            <Text color={colors.textPrimary} fontSize="xl" fontWeight="bold">
-              Sign In Required
-            </Text>
-            <Text color={colors.textSecondary} textAlign="center">
-              Please sign in to view your profile and achievements
-            </Text>
-            <Button
-              onPress={() => router.push("/(tabs)/sign-in")}
-              bg={colors.primary}
-              _pressed={{ bg: colors.primaryHover }}
-              size="lg"
-              width="100%"
-              maxW="300px"
-            >
-              <Text color={colors.textPrimary} fontWeight="semibold">
-                Sign In
-              </Text>
-            </Button>
-          </VStack>
-        </Center>
-      </Box>
+      <Center flex={1} bg={colors.background}>
+        <Spinner size="lg" color={colors.primary} />
+      </Center>
     );
   }
 
@@ -199,15 +215,19 @@ export default function ProfilePage() {
   return (
     <GestureDetector gesture={swipeGesture}>
       <Box flex={1} bg={colors.background}>
-        <ScrollView>
+        <ScrollView showsVerticalScrollIndicator={false}>
           <VStack
             space={4}
             p={6}
             pt={Math.max(insets.top, 16)}
+            pb={Math.max(insets.bottom, 24)}
           >
             <VStack space={2}>
               <Text color={colors.primary} fontSize="2xl" fontWeight="bold">
-                {welcomeText}, welcome {user?.nickname}.
+                {welcomeText}
+              </Text>
+              <Text color={colors.textPrimary} fontSize="lg">
+                Welcome {user?.nickname}.
               </Text>
             </VStack>
 
@@ -303,6 +323,9 @@ export default function ProfilePage() {
                                       router.push(
                                         `/devices/${device.name.sanitized}`,
                                       )}
+                                    isFavorited={favoritedDeviceIds.has(
+                                      device.id,
+                                    )}
                                   />
                                 </Box>
                               ))}
@@ -558,6 +581,10 @@ export default function ProfilePage() {
                                                         `/devices/${device.name.sanitized}`,
                                                       )}
                                                     imageOnly={true}
+                                                    isFavorited={favoritedDeviceIds
+                                                      .has(
+                                                        device.id,
+                                                      )}
                                                   />
                                                 </Box>
                                               ))}
@@ -593,25 +620,165 @@ export default function ProfilePage() {
               )}
             </Box>
 
-            {/* Sign Out Button */}
+            {/* Leave feedback */}
+            <Box
+              bg={colors.backgroundCard}
+              borderRadius="md"
+              borderWidth={1}
+              borderColor={colors.border}
+              overflow="hidden"
+              mt={8}
+            >
+              <Pressable
+                onPress={() => {
+                  setFeedbackError(null);
+                  setFeedbackText("");
+                  setFeedbackModalOpen(true);
+                }}
+              >
+                <Box p={4}>
+                  <HStack alignItems="center" space={2}>
+                    <Feather
+                      name="message-square"
+                      size={20}
+                      color={colors.primary}
+                    />
+                    <Text
+                      color={colors.textPrimary}
+                      fontSize="lg"
+                      fontWeight="semibold"
+                    >
+                      Leave feedback
+                    </Text>
+                  </HStack>
+                </Box>
+              </Pressable>
+            </Box>
+
+            {/* Sign Out - at bottom of content */}
             <Button
               onPress={() => {
                 signOut();
                 router.replace("/(tabs)/profile");
               }}
-              bg={colors.backgroundCard}
-              borderWidth={1}
-              borderColor={colors.border}
-              _pressed={{ bg: colors.backgroundElevated }}
-              size="md"
+              bg={colors.error}
+              _pressed={{ bg: "#8a0a0a", opacity: 0.95 }}
+              size="lg"
               width="100%"
-              maxW="200px"
-              mt={4}
+              mt={3}
             >
-              <Text color={colors.textPrimary}>Sign Out</Text>
+              <HStack space={2} alignItems="center">
+                <Feather
+                  name="log-out"
+                  size={20}
+                  color={colors.primaryContrast}
+                />
+                <Text
+                  color={colors.primaryContrast}
+                  fontWeight="semibold"
+                  fontSize="md"
+                >
+                  Sign Out
+                </Text>
+              </HStack>
             </Button>
           </VStack>
         </ScrollView>
+
+        {/* Feedback modal */}
+        <Modal
+          visible={feedbackModalOpen}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setFeedbackModalOpen(false)}
+        >
+          <TouchableWithoutFeedback onPress={() => setFeedbackModalOpen(false)}>
+            <View
+              style={{
+                flex: 1,
+                backgroundColor: "rgba(0,0,0,0.5)",
+                justifyContent: "center",
+                alignItems: "center",
+                padding: 24,
+              }}
+            >
+              <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
+                <Box
+                  bg={colors.backgroundCard}
+                  borderRadius="md"
+                  width="100%"
+                  maxWidth={400}
+                  borderWidth={1}
+                  borderColor={colors.border}
+                  p={4}
+                >
+                  <HStack
+                    justifyContent="space-between"
+                    alignItems="center"
+                    mb={3}
+                  >
+                    <Text
+                      color={colors.textPrimary}
+                      fontSize="lg"
+                      fontWeight="semibold"
+                    >
+                      Leave feedback
+                    </Text>
+                    <Pressable
+                      onPress={() => setFeedbackModalOpen(false)}
+                      p={1}
+                    >
+                      <Feather
+                        name="x"
+                        size={24}
+                        color={colors.textSecondary}
+                      />
+                    </Pressable>
+                  </HStack>
+                  <TextInput
+                    placeholder="Your suggestion or feedback..."
+                    placeholderTextColor={colors.textTertiary}
+                    value={feedbackText}
+                    onChangeText={setFeedbackText}
+                    multiline
+                    numberOfLines={5}
+                    style={{
+                      backgroundColor: colors.background,
+                      borderColor: colors.border,
+                      borderWidth: 1,
+                      borderRadius: 8,
+                      color: colors.textPrimary,
+                      fontSize: 16,
+                      minHeight: 120,
+                      paddingHorizontal: 12,
+                      paddingVertical: 12,
+                      textAlignVertical: "top",
+                      marginBottom: 12,
+                    }}
+                  />
+                  {feedbackError && (
+                    <Text color={colors.error} fontSize="sm" mb={2}>
+                      {feedbackError}
+                    </Text>
+                  )}
+                  <Button
+                    onPress={handleSendFeedback}
+                    isLoading={feedbackSending}
+                    isDisabled={feedbackSending || !feedbackText.trim()}
+                    bg={colors.primary}
+                    _pressed={{ bg: colors.primaryHover }}
+                    size="lg"
+                    width="100%"
+                  >
+                    <Text color={colors.primaryContrast} fontWeight="semibold">
+                      Send
+                    </Text>
+                  </Button>
+                </Box>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
       </Box>
     </GestureDetector>
   );

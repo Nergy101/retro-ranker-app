@@ -16,12 +16,14 @@ import { DeviceCollection } from "../../types/device-collection";
 import { DeviceCard } from "../../components/cards/DeviceCard";
 import { colors } from "../../theme/colors";
 import { useAuth } from "../../contexts/AuthContext";
+import { useFavoritedDeviceIds } from "../../hooks/useFavoritedDeviceIds";
 
 export default function CollectionDetailPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { authenticated, user } = useAuth();
+  const { favoritedDeviceIds } = useFavoritedDeviceIds();
   const [collection, setCollection] = useState<DeviceCollection | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -166,6 +168,7 @@ export default function CollectionDetailPage() {
                             device={device}
                             onPress={() =>
                               router.push(`/devices/${device.name.sanitized}`)}
+                            isFavorited={favoritedDeviceIds.has(device.id)}
                           />
                         </Box>
                       ))}

@@ -27,6 +27,7 @@ import {
 import { ComparisonForm } from "../../components/comparisons/ComparisonForm";
 import { DeviceComparisonResult } from "../../components/comparisons/DeviceComparisonResult";
 import { DeviceCard } from "../../components/cards/DeviceCard";
+import { useFavoritedDeviceIds } from "../../hooks/useFavoritedDeviceIds";
 
 interface ExampleComparison {
   deviceA: string; // sanitized name
@@ -51,6 +52,7 @@ const exampleComparisons: ExampleComparison[] = [
 export default function ComparePage() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { favoritedDeviceIds } = useFavoritedDeviceIds();
   const [devices, setDevices] = useState<Device[]>([]);
   const [ranking, setRanking] = useState<Ranking | null>(null);
   const [exampleDevices, setExampleDevices] = useState<
@@ -235,6 +237,9 @@ export default function ComparePage() {
                                       <DeviceCard
                                         device={deviceA}
                                         imageOnly={false}
+                                        isFavorited={favoritedDeviceIds.has(
+                                          deviceA.id,
+                                        )}
                                       />
                                     </Box>
                                     <Box
@@ -255,6 +260,9 @@ export default function ComparePage() {
                                       <DeviceCard
                                         device={deviceB}
                                         imageOnly={false}
+                                        isFavorited={favoritedDeviceIds.has(
+                                          deviceB.id,
+                                        )}
                                       />
                                     </Box>
                                   </HStack>
