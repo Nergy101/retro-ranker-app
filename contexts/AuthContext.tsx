@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { AuthService } from "../services/auth/auth.service";
 import { PocketBaseService } from "../services/pocketbase/pocketbase.service";
+import { OAuthCreateData } from "../types/auth.contract";
 import { User } from "../types/user.contract";
 
 interface AuthContextType {
@@ -20,7 +21,7 @@ interface AuthContextType {
     code: string,
     codeVerifier: string,
     redirectUrl: string,
-    createData?: Record<string, any>,
+    createData?: OAuthCreateData,
   ) => Promise<void>;
   signOut: () => void;
   checkAuth: () => Promise<void>;
@@ -97,7 +98,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     code: string,
     codeVerifier: string,
     redirectUrl: string,
-    createData?: Record<string, any>,
+    createData?: OAuthCreateData,
   ) => {
     try {
       setLoading(true);

@@ -24,6 +24,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import { useNetwork } from "../../contexts/NetworkContext";
 import { DeviceService } from "../../services/devices/device.service";
 import { Device } from "../../types/device.model";
 import { TagModel } from "../../types/tag.model";
@@ -44,6 +45,7 @@ import {
 
 export default function SearchPage() {
   const router = useRouter();
+  const { isConnected } = useNetwork();
   const localParams = useLocalSearchParams<{
     tagId?: string | string[];
     sortBy?: string | string[];
@@ -76,6 +78,7 @@ export default function SearchPage() {
   const [pageNumber, setPageNumber] = useState(1);
   const pageSize = 10; // Fixed page size for 2-column grid layout
   const [totalResults, setTotalResults] = useState(0);
+  const [isCached, setIsCached] = useState(false);
 
   // Calculate card width for 2-column grid with gaps
   // Screen width - padding (32px total) - gap between cards (12px) = available width
@@ -113,7 +116,7 @@ export default function SearchPage() {
     checkStoredTagId();
     // Load saved search query
     loadSavedSearchQuery();
-  }, []);
+  }, [isConnected]);
 
   const loadSavedSearchQuery = async () => {
     try {
@@ -271,6 +274,50 @@ export default function SearchPage() {
   const loadInitialData = async () => {
     try {
       setLoading(true);
+      setIsCached(false);
+
+      if (!isConnected) {
+        // Offline: load from cache
+        const [tags, cachedDevices] = await Promise.all([
+          deviceService.getCachedAllTagsAsync(),
+          deviceService.getCachedAllDevicesAsync(),
+        ]);
+        setAllTags(tags ?? []);
+        if (tags?.length) {
+          const popularTagSlugs = [
+            "year-2025",
+            "year-2026",
+            "upcoming",
+            "oled",
+            "personal-pick",
+            "anbernic",
+            "miyoo-bittboy",
+            "ayaneo",
+            "powkiddy",
+            "clamshell",
+            "horizontal",
+            "vertical",
+            "micro",
+          ];
+          const popularTagsFiltered = (tags ?? []).filter((tag) =>
+            popularTagSlugs.includes(tag.slug),
+          );
+          setPopularTags(popularTagsFiltered);
+        }
+        if (cachedDevices?.length) {
+          setDevices(cachedDevices.slice(0, pageSize));
+          setTotalResults(cachedDevices.length);
+          setIsCached(true);
+        } else {
+          setDevices([]);
+          setTotalResults(0);
+        }
+        setRateLimitError(null);
+        setError(null);
+        setLoading(false);
+        return;
+      }
+
       const [tags, newArrivals] = await Promise.all([
         deviceService.getAllTags(),
         deviceService.getNewArrivals(5),
@@ -337,6 +384,17 @@ export default function SearchPage() {
   const searchDevices = async () => {
     try {
       setLoading(true);
+      if (!isConnected) {
+        const cached = await deviceService.getCachedAllDevicesAsync();
+        if (cached?.length) {
+          const start = (pageNumber - 1) * pageSize;
+          setDevices(cached.slice(start, start + pageSize));
+          setTotalResults(cached.length);
+          setIsCached(true);
+        }
+        setLoading(false);
+        return;
+      }
       const result = await deviceService.searchDevices(
         searchParams.query,
         searchParams.category,
@@ -860,9 +918,16 @@ export default function SearchPage() {
             />
 
             {/* Results Count */}
-            <Text fontSize="sm" color={colors.textSecondary}>
-              {totalResults} device{totalResults !== 1 ? "s" : ""} found
-            </Text>
+            <Box>
+              <Text fontSize="sm" color={colors.textSecondary}>
+                {totalResults} device{totalResults !== 1 ? "s" : ""} found
+              </Text>
+              {isCached && (
+                <Text fontSize="xs" color={colors.textTertiary} mt={0.5}>
+                  Last updated when online
+                </Text>
+              )}
+            </Box>
 
             {/* Pagination */}
             {totalResults > pageSize && (

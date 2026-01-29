@@ -56,9 +56,7 @@ Before you begin, ensure you have the following installed:
    cp .env.example .env
    ```
 
-   Edit `.env` and configure:
-   - `POCKETBASE_URL`: Your PocketBase backend URL
-   - `EXPO_PUBLIC_POCKETBASE_URL`: Public PocketBase URL (same as above)
+   Edit `.env` and configure `EXPO_PUBLIC_POCKETBASE_URL` and `EXPO_PUBLIC_API_BASE_URL` (see [Environment Variables](#environment-variables) below).
 
 4. **Start the development server**
    ```bash
@@ -207,11 +205,14 @@ For more information on EAS Build, visit the [Expo documentation](https://docs.e
 
 ### Environment Variables
 
-Create a `.env` file based on `.env.example`:
+Copy `.env.example` to `.env`, then edit `.env` and set:
+
+- **EXPO_PUBLIC_POCKETBASE_URL**: Your PocketBase backend URL (used for auth and device data).
+- **EXPO_PUBLIC_API_BASE_URL**: Base URL for the Retro Ranker API (e.g. `https://retroranker.site`), used in `utils/constants.ts` for API calls.
 
 ```env
-POCKETBASE_URL=https://pocketbase.retroranker.site
 EXPO_PUBLIC_POCKETBASE_URL=https://pocketbase.retroranker.site
+EXPO_PUBLIC_API_BASE_URL=https://retroranker.site
 ```
 
 ### App Configuration
@@ -219,7 +220,7 @@ EXPO_PUBLIC_POCKETBASE_URL=https://pocketbase.retroranker.site
 App settings are configured in `app.json`:
 
 - App name: "Retro Ranker"
-- Version: 1.0.0
+- Version: 1.0.2 (see `app.json` or `package.json` for current version)
 - Orientation: Portrait
 - UI Style: Dark mode only
 - iOS: Tablet support enabled

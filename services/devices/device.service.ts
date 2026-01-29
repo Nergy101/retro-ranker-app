@@ -2,7 +2,7 @@ import {
   createPocketBaseService,
   PocketBaseService,
 } from "../pocketbase/pocketbase.service";
-import { Device } from "../../types/device.model";
+import { Device, RawPocketBaseDeviceRecord } from "../../types/device.model";
 import { TagModel } from "../../types/tag.model";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -48,8 +48,8 @@ export function getDeviceImageUrl(device: Device): string {
 /**
  * Enhances a raw PocketBase device record with the PocketBase image URL
  */
-function enhanceDeviceWithImageUrl(rawDevice: any): Device {
-  const deviceData = rawDevice.deviceData as Device;
+function enhanceDeviceWithImageUrl(rawDevice: RawPocketBaseDeviceRecord): Device {
+  const deviceData = rawDevice.deviceData;
   if (rawDevice.deviceMainImage && deviceData.image) {
     deviceData.image.pocketbaseUrl = getPocketBaseImageUrl(
       rawDevice.id,
@@ -64,12 +64,118 @@ export class DeviceService {
   private static instance: DeviceService | null = null;
   private devicesCache: { data: Device[]; timestamp: number } | null = null;
   private tagsCache: { data: TagModel[]; timestamp: number } | null = null;
+  private newArrivalsCache: Device[] | null = null;
+  private bangForYourBuckCache: Device[] | null = null;
+  private personalPicksCache: Device[] | null = null;
   private readonly cacheDurationMs = 30 * 60 * 1000; // 30 minutes
   private readonly tagsCacheDurationMs = 24 * 60 * 60 * 1000; // 24 hours for tags
   private readonly TAGS_CACHE_KEY = "device_tags_cache";
+  private readonly DEVICES_CACHE_KEY = "device_devices_cache";
 
   private constructor(pocketBaseService: PocketBaseService) {
     this.pocketBaseService = pocketBaseService;
+  }
+
+  /**
+   * Persist devices cache to AsyncStorage (for offline use after app restart).
+   */
+  private async persistDevicesCache(): Promise<void> {
+    if (!this.devicesCache) return;
+    try {
+      await AsyncStorage.setItem(
+        this.DEVICES_CACHE_KEY,
+        JSON.stringify(this.devicesCache),
+      );
+    } catch (error) {
+      console.error("Error saving devices to AsyncStorage cache:", error);
+    }
+  }
+
+  /**
+   * Return all devices from in-memory cache only (sync).
+   */
+  public getCachedAllDevices(): Device[] | null {
+    return this.devicesCache?.data ?? null;
+  }
+
+  /**
+   * Return all devices from cache (memory or AsyncStorage). Use when offline.
+   */
+  public async getCachedAllDevicesAsync(): Promise<Device[] | null> {
+    if (this.devicesCache?.data?.length) return this.devicesCache.data;
+    try {
+      const cached = await AsyncStorage.getItem(this.DEVICES_CACHE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached) as {
+          data: Device[];
+          timestamp: number;
+        };
+        if (parsed.data?.length) {
+          this.devicesCache = parsed;
+          return parsed.data;
+        }
+      }
+    } catch (error) {
+      console.error("Error reading devices from AsyncStorage cache:", error);
+    }
+    return null;
+  }
+
+  /**
+   * Return a single device from cache by sanitized name (memory or full list cache).
+   */
+  public getCachedDeviceByName(sanitizedName: string): Device | null {
+    const data = this.devicesCache?.data;
+    if (!data?.length) return null;
+    return data.find((d) => d.name.sanitized === sanitizedName) ?? null;
+  }
+
+  /**
+   * Return a single device from cache (memory or AsyncStorage). Use when offline.
+   */
+  public async getCachedDeviceByNameAsync(
+    sanitizedName: string,
+  ): Promise<Device | null> {
+    const fromMemory = this.getCachedDeviceByName(sanitizedName);
+    if (fromMemory) return fromMemory;
+    const all = await this.getCachedAllDevicesAsync();
+    if (!all?.length) return null;
+    return all.find((d) => d.name.sanitized === sanitizedName) ?? null;
+  }
+
+  public getCachedNewArrivals(): Device[] | null {
+    return this.newArrivalsCache?.length ? this.newArrivalsCache : null;
+  }
+
+  public getCachedBangForYourBuck(): Device[] | null {
+    return this.bangForYourBuckCache?.length ? this.bangForYourBuckCache : null;
+  }
+
+  public getCachedPersonalPicks(): Device[] | null {
+    return this.personalPicksCache?.length ? this.personalPicksCache : null;
+  }
+
+  /**
+   * Return all tags from cache (memory or AsyncStorage). Use when offline.
+   */
+  public async getCachedAllTagsAsync(): Promise<TagModel[] | null> {
+    if (this.tagsCache?.data?.length) return this.tagsCache.data;
+    try {
+      const cached = await AsyncStorage.getItem(this.TAGS_CACHE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached) as {
+          data: TagModel[];
+          timestamp: number;
+        };
+        if (parsed.data?.length) {
+          this.tagsCache = parsed;
+          return parsed.data;
+        }
+      }
+    } catch (error) {
+      console.error("Error reading tags from AsyncStorage cache:", error);
+    }
+    return null;
   }
 
   public static getInstance(): DeviceService {
@@ -96,6 +202,7 @@ export class DeviceService {
       .map((device) => enhanceDeviceWithImageUrl(device));
 
     this.devicesCache = { data, timestamp: now };
+    this.persistDevicesCache();
     return data;
   }
 
@@ -272,6 +379,7 @@ export class DeviceService {
           arr.findIndex((e) => e.name.sanitized === d.name.sanitized) === idx,
       );
     this.devicesCache = { data: devices, timestamp: now };
+    this.persistDevicesCache();
     return device;
   }
 
@@ -310,7 +418,11 @@ export class DeviceService {
       sort: "-deviceData.released.mentionedDate",
       expand: "",
     });
-    return result.items.map((device) => enhanceDeviceWithImageUrl(device));
+    const data = result.items.map((device) =>
+      enhanceDeviceWithImageUrl(device),
+    );
+    this.personalPicksCache = data;
+    return data;
   }
 
   public async getNewArrivals(amount: number = 4): Promise<Device[]> {
@@ -319,7 +431,11 @@ export class DeviceService {
       sort: "-deviceData.released.mentionedDate",
       expand: "",
     });
-    return result.items.map((device) => enhanceDeviceWithImageUrl(device));
+    const data = result.items.map((device) =>
+      enhanceDeviceWithImageUrl(device),
+    );
+    this.newArrivalsCache = data;
+    return data;
   }
 
   public async getUpcoming(amount: number = 5): Promise<Device[]> {
@@ -411,9 +527,11 @@ export class DeviceService {
     ];
 
     // Prevent duplicates (can happen if a device matches both buckets)
-    return combined.filter(
+    const data = combined.filter(
       (device, i, arr) => arr.findIndex((d) => d.id === device.id) === i,
     );
+    this.bangForYourBuckCache = data;
+    return data;
   }
 
   public async getTagBySlug(tagSlug: string): Promise<TagModel | null> {

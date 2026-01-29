@@ -5,10 +5,10 @@
 
 export const colors = {
   // Primary orange colors
-  primary: "#FF6B35",
-  primaryHover: "#E55A2B",
-  primaryFocus: "rgba(255, 107, 53, 0.2)",
-  primaryBackground: "#FF6B35",
+  primary: "#c6752f",
+  primaryHover: "#b0682a",
+  primaryFocus: "rgba(198, 117, 47, 0.2)",
+  primaryBackground: "#c6752f",
   primaryContrast: "#FFFFFF",
 
   // Dark backgrounds

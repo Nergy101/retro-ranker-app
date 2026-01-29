@@ -14,6 +14,7 @@ import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { Dimensions, StyleSheet, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNetwork } from "../../contexts/NetworkContext";
 import {
   DeviceService,
   getDeviceImageUrl,
@@ -43,6 +44,7 @@ export default function DeviceDetailPage() {
   const { name } = useLocalSearchParams<{ name: string }>();
   const router = useRouter();
   const navigation = useNavigation();
+  const { isConnected } = useNetwork();
   const screenWidth = Dimensions.get("window").width;
   const [device, setDevice] = useState<Device | null>(null);
   const [similarDevices, setSimilarDevices] = useState<Device[]>([]);
@@ -51,6 +53,7 @@ export default function DeviceDetailPage() {
   const [rateLimitError, setRateLimitError] = useState<{
     retryAfterMinutes: number;
   } | null>(null);
+  const [isCached, setIsCached] = useState(false);
 
   const deviceService = DeviceService.getInstance();
 
@@ -73,11 +76,30 @@ export default function DeviceDetailPage() {
     if (name) {
       loadDevice();
     }
-  }, [name]);
+  }, [name, isConnected]);
 
   const loadDevice = async () => {
     try {
       setLoading(true);
+      setIsCached(false);
+
+      if (!isConnected) {
+        const deviceData = await deviceService.getCachedDeviceByNameAsync(
+          name!,
+        );
+        if (deviceData) {
+          setDevice(deviceData);
+          setSimilarDevices([]);
+          setIsCached(true);
+          setRateLimitError(null);
+          setError(null);
+        } else {
+          setError("Device not found. Connect to the internet to load this device.");
+        }
+        setLoading(false);
+        return;
+      }
+
       const [deviceData, similar] = await Promise.all([
         deviceService.getDeviceByName(name!),
         deviceService.getSimilarDevices(name!, 4),
@@ -90,7 +112,6 @@ export default function DeviceDetailPage() {
 
       setDevice(deviceData);
       setSimilarDevices(similar);
-      // Clear any previous errors on successful load
       setRateLimitError(null);
       setError(null);
     } catch (err) {
@@ -166,6 +187,11 @@ export default function DeviceDetailPage() {
             <Text fontSize="3xl" fontWeight="bold" color={colors.textPrimary}>
               {device.brand.raw} {device.name.raw}
             </Text>
+            {isCached && (
+              <Text fontSize="xs" color={colors.textTertiary}>
+                Last updated when online
+              </Text>
+            )}
             {device.pricing.average && (
               <HStack alignItems="center" space={1}>
                 <Feather name="dollar-sign" size={18} color={colors.primary} />

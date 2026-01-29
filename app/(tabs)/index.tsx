@@ -17,6 +17,7 @@ import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DeviceCard } from "../../components/cards/DeviceCard";
 import { RateLimitError } from "../../components/errors/RateLimitError";
+import { useNetwork } from "../../contexts/NetworkContext";
 import { DeviceService } from "../../services/devices/device.service";
 import { colors } from "../../theme/colors";
 import { Device } from "../../types/device.model";
@@ -29,6 +30,7 @@ export default function HomePage() {
   const insets = useSafeAreaInsets();
   const screenWidth = Dimensions.get("window").width;
   const deviceService = DeviceService.getInstance();
+  const { isConnected } = useNetwork();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +45,7 @@ export default function HomePage() {
   const [personalPickTagId, setPersonalPickTagId] = useState<string | null>(
     null,
   );
+  const [isCached, setIsCached] = useState(false);
 
   // Calculate card width for 2-column grid with gaps
   const cardGap = 12;
@@ -54,13 +57,37 @@ export default function HomePage() {
 
   useEffect(() => {
     loadInitialData();
-  }, []);
+  }, [isConnected]);
 
   const loadInitialData = async () => {
     try {
       setLoading(true);
+      setIsCached(false);
 
-      // Load all device sections in parallel and get personal-pick tag
+      if (!isConnected) {
+        // Offline: load from cache
+        const [arrivals, bang, picks, allCached] = await Promise.all([
+          Promise.resolve(deviceService.getCachedNewArrivals()),
+          Promise.resolve(deviceService.getCachedBangForYourBuck()),
+          Promise.resolve(deviceService.getCachedPersonalPicks()),
+          deviceService.getCachedAllDevicesAsync(),
+        ]);
+        setNewArrivals(arrivals ?? []);
+        setBangForYourBuck(bang ?? []);
+        setPersonalPicks(picks ?? []);
+        if (arrivals?.length || bang?.length || picks?.length) {
+          setIsCached(true);
+        } else if (allCached?.length) {
+          setNewArrivals(allCached.slice(0, 4));
+          setIsCached(true);
+        }
+        setRateLimitError(null);
+        setError(null);
+        setLoading(false);
+        return;
+      }
+
+      // Online: load from API
       const [arrivals, bang, picks, personalPickTag] = await Promise.all([
         deviceService.getNewArrivals(),
         deviceService.getBangForYourBuck(),
@@ -75,7 +102,6 @@ export default function HomePage() {
         setPersonalPickTagId(personalPickTag.id);
       }
 
-      // Clear any previous errors on successful load
       setRateLimitError(null);
       setError(null);
     } catch (err) {
@@ -244,6 +270,16 @@ export default function HomePage() {
                   Retro Ranker
                 </Text>
               </HStack>
+              {isCached && (
+                <Text
+                  fontSize="xs"
+                  color={colors.textTertiary}
+                  textAlign="center"
+                  mt={1}
+                >
+                  Last updated when online
+                </Text>
+              )}
             </Box>
 
             {/* New Arrivals Section */}

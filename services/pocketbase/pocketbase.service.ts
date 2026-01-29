@@ -4,6 +4,7 @@ import PocketBase, {
   RecordModel,
 } from "pocketbase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { OAuthCreateData } from "../../types/auth.contract";
 
 const POCKETBASE_URL =
   process.env.EXPO_PUBLIC_POCKETBASE_URL ||
@@ -134,7 +135,7 @@ export class PocketBaseService {
     code: string,
     codeVerifier: string,
     redirectUrl: string,
-    createData?: Record<string, any>,
+    createData?: OAuthCreateData,
   ): Promise<any> {
     try {
       const result = await this.pb
@@ -253,7 +254,6 @@ export class PocketBaseService {
         console.error(`Error fetching ${collection}:`, {
           message: error.message,
           status: error.status,
-          statusText: error.statusText,
           url: error.url,
           response: error.response?.data || error.response,
         });

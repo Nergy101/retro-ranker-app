@@ -376,3 +376,14 @@ export interface Tag {
   slug: string;
   color?: string;
 }
+
+/**
+ * Raw PocketBase device record shape (from getList/getAll).
+ * Used to type enhanceDeviceWithImageUrl and avoid `any`.
+ */
+export interface RawPocketBaseDeviceRecord {
+  id: string;
+  deviceMainImage?: string | null;
+  deviceData: Device;
+  archived?: boolean;
+}
