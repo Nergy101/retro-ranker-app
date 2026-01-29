@@ -8,7 +8,7 @@ import { API_BASE_URL } from "../../../utils/constants";
 
 export default function OAuthCallbackScreen() {
   const router = useRouter();
-  const { signInWithOAuth, loading: authLoading } = useAuth();
+  const { signInWithOAuth, loading: authLoading, initialized } = useAuth();
   const { provider, code, state } = useLocalSearchParams<{
     provider?: string;
     code?: string;
@@ -21,8 +21,13 @@ export default function OAuthCallbackScreen() {
   const processingRef = useRef<"idle" | "running" | "done">("idle");
 
   useEffect(() => {
-    // Wait for auth to be ready
-    if (authLoading || !signInWithOAuth) {
+    // Wait for auth context to be fully initialized (important for cold start via deep link)
+    if (!initialized || authLoading || !signInWithOAuth) {
+      console.log("[OAuth Callback] Waiting for auth to initialize...", {
+        initialized,
+        authLoading,
+        hasSignInWithOAuth: !!signInWithOAuth,
+      });
       return;
     }
 
@@ -59,8 +64,13 @@ export default function OAuthCallbackScreen() {
         processingRef.current = "done";
         setError("Missing OAuth parameters");
         setStatus("Redirecting...");
+        // Use a longer delay for navigation to ensure UI is ready
         setTimeout(() => {
-          router.replace("/(tabs)/sign-in");
+          try {
+            router.replace("/(tabs)/sign-in");
+          } catch (navErr) {
+            console.error("[OAuth Callback] Navigation error:", navErr);
+          }
         }, 500);
         return;
       }
@@ -69,9 +79,19 @@ export default function OAuthCallbackScreen() {
         setStatus("Verifying session...");
         console.log("[OAuth Callback] Getting code verifier for state:", state);
 
-        const codeVerifier = await pkceSessionService.getFromSession(state, {
-          remove: true,
-        });
+        let codeVerifier: string | undefined;
+        try {
+          codeVerifier = await pkceSessionService.getFromSession(state, {
+            remove: true,
+          });
+        } catch (storageErr) {
+          console.error("[OAuth Callback] Storage error:", storageErr);
+          // On cold start, storage might not be ready - wait a bit and retry
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          codeVerifier = await pkceSessionService.getFromSession(state, {
+            remove: true,
+          });
+        }
 
         console.log(
           "[OAuth Callback] Code verifier:",
@@ -86,7 +106,11 @@ export default function OAuthCallbackScreen() {
           processingRef.current = "done";
           setStatus("Session expired. Redirecting...");
           setTimeout(() => {
-            router.replace("/(tabs)/sign-in");
+            try {
+              router.replace("/(tabs)/sign-in");
+            } catch (navErr) {
+              console.error("[OAuth Callback] Navigation error:", navErr);
+            }
           }, 500);
           return;
         }
@@ -105,25 +129,44 @@ export default function OAuthCallbackScreen() {
         processingRef.current = "done";
         setStatus("Success! Redirecting...");
 
-        // Navigate to profile on success
+        // Navigate to profile on success - use slightly longer delay to ensure state is settled
         setTimeout(() => {
-          console.log("[OAuth Callback] Navigating to profile");
-          router.replace("/(tabs)/profile");
-        }, 100);
+          try {
+            console.log("[OAuth Callback] Navigating to profile");
+            router.replace("/(tabs)/profile");
+          } catch (navErr) {
+            console.error("[OAuth Callback] Navigation error:", navErr);
+          }
+        }, 200);
       } catch (err) {
         console.error("[OAuth Callback] Error:", err);
         processingRef.current = "done";
-        setError(err instanceof Error ? err.message : "OAuth failed");
+        const errorMessage = err instanceof Error
+          ? err.message
+          : "OAuth failed";
+        setError(errorMessage);
         setStatus("Login failed");
         setTimeout(() => {
-          router.replace("/(tabs)/sign-in");
+          try {
+            router.replace("/(tabs)/sign-in");
+          } catch (navErr) {
+            console.error("[OAuth Callback] Navigation error:", navErr);
+          }
         }, 2000);
       }
     };
 
     // Run immediately - don't use setTimeout that gets cleared by StrictMode
     completeOAuth();
-  }, [provider, code, state, router, signInWithOAuth, authLoading]);
+  }, [
+    provider,
+    code,
+    state,
+    router,
+    signInWithOAuth,
+    authLoading,
+    initialized,
+  ]);
 
   return (
     <Center flex={1} bg={colors.background}>

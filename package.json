@@ -11,7 +11,14 @@
     "build:android:apk": "eas build --platform android --profile production",
     "build:ios": "eas build --platform ios",
     "publish:android": "eas submit --platform android",
-    "publish:ios": "eas submit --platform ios"
+    "publish:ios": "eas submit --platform ios",
+    "update": "eas update",
+    "update:development": "eas update --channel development",
+    "update:preview": "eas update --channel preview",
+    "update:production": "eas update --channel production",
+    "update:development:patch": "eas update --channel development --message \"Patch\"",
+    "update:preview:patch": "eas update --channel preview --message \"Patch\"",
+    "update:production:patch": "eas update --channel production --message \"Patch\""
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -24,6 +31,7 @@
     "expo-linking": "^8.0.11",
     "expo-router": "~6.0.22",
     "expo-status-bar": "~3.0.9",
+    "expo-updates": "~29.0.16",
     "native-base": "^3.4.28",
     "pocketbase": "^0.26.6",
     "react": "19.1.0",

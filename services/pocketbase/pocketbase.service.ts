@@ -5,7 +5,8 @@ import PocketBase, {
 } from "pocketbase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const POCKETBASE_URL = process.env.EXPO_PUBLIC_POCKETBASE_URL ||
+const POCKETBASE_URL =
+  process.env.EXPO_PUBLIC_POCKETBASE_URL ||
   "https://pocketbase.retroranker.site";
 
 /**
@@ -15,6 +16,8 @@ const POCKETBASE_URL = process.env.EXPO_PUBLIC_POCKETBASE_URL ||
 export class PocketBaseService {
   private pb: PocketBase;
   private static instance: PocketBaseService | null = null;
+  private static initPromise: Promise<void> | null = null;
+  private initialized: boolean = false;
 
   /**
    * Constructor for PocketBaseService
@@ -42,10 +45,31 @@ export class PocketBaseService {
   public static getInstance(): PocketBaseService {
     if (!PocketBaseService.instance) {
       PocketBaseService.instance = new PocketBaseService(POCKETBASE_URL);
-      // Load auth from storage on initialization
-      PocketBaseService.instance.loadAuthFromStorage();
+      // Start loading auth from storage (tracked by initPromise)
+      PocketBaseService.initPromise = PocketBaseService.instance
+        .loadAuthFromStorage()
+        .catch((err) => {
+          console.error("Failed to load auth from storage:", err);
+        });
     }
     return PocketBaseService.instance;
+  }
+
+  /**
+   * Wait for the service to be fully initialized (auth loaded from storage)
+   * Call this before making authenticated requests on cold start
+   */
+  public static async waitForInit(): Promise<void> {
+    if (PocketBaseService.initPromise) {
+      await PocketBaseService.initPromise;
+    }
+  }
+
+  /**
+   * Check if the service is initialized
+   */
+  public isInitialized(): boolean {
+    return this.initialized;
   }
 
   /**
@@ -58,8 +82,10 @@ export class PocketBaseService {
         const { token, model } = JSON.parse(stored);
         this.pb.authStore.save(token, model);
       }
+      this.initialized = true;
     } catch (error) {
       console.error("Error loading auth from storage:", error);
+      this.initialized = true; // Mark as initialized even on error
     }
   }
 

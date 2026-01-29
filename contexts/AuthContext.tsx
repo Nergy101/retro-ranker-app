@@ -6,11 +6,13 @@ import React, {
   useState,
 } from "react";
 import { AuthService } from "../services/auth/auth.service";
+import { PocketBaseService } from "../services/pocketbase/pocketbase.service";
 import { User } from "../types/user.contract";
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  initialized: boolean;
   authenticated: boolean;
   signIn: (nickname: string, password: string) => Promise<void>;
   signInWithOAuth: (
@@ -42,11 +44,16 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
   const [authService] = useState(() => new AuthService());
 
   const checkAuth = async () => {
     try {
       setLoading(true);
+
+      // Wait for PocketBase to load auth from storage first
+      await PocketBaseService.waitForInit();
+
       const currentUser = authService.getCurrentUser();
 
       if (currentUser && authService.isAuthenticated()) {
@@ -68,6 +75,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setUser(null);
     } finally {
       setLoading(false);
+      setInitialized(true);
     }
   };
 
@@ -93,6 +101,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   ) => {
     try {
       setLoading(true);
+
+      // Ensure PocketBase is fully initialized before attempting OAuth
+      await PocketBaseService.waitForInit();
+
       const result = await authService.signInWithOAuth(
         provider,
         code,
@@ -103,6 +115,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setUser(result.record as User);
     } catch (error) {
       console.error("OAuth sign in error:", error);
+      // Reset user state on error to prevent inconsistent state
+      setUser(null);
       throw error;
     } finally {
       setLoading(false);
@@ -132,6 +146,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const value: AuthContextType = {
     user,
     loading,
+    initialized,
     authenticated: !!user,
     signIn,
     signInWithOAuth,
