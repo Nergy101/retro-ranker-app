@@ -21,16 +21,16 @@ export const theme = extendTheme({
   },
   colors: {
     primary: {
-      50: "#fff5f2",
-      100: "#ffe5d9",
-      200: "#ffcbb3",
-      300: "#ffb08d",
-      400: "#ff9567",
-      500: colors.primary, // #c6752f
-      600: colors.primaryHover, // #b0682a
-      700: "#cc4a22",
-      800: "#993819",
-      900: "#662611",
+      50: "#fff8f0",
+      100: "#ffecd6",
+      200: "#ffd9ad",
+      300: "#ffc685",
+      400: "#ffb35c",
+      500: colors.primary, // #ff9500 (matches retro-ranker web)
+      600: colors.primaryHover, // #e68600
+      700: "#cc7700",
+      800: "#995900",
+      900: "#663b00",
     },
   },
   components: {

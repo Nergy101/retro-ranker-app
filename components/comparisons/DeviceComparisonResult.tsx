@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useState } from "react";
 import {
   Badge,
   Box,
@@ -8,11 +8,14 @@ import {
   Text,
   VStack,
 } from "native-base";
-import { Feather } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Device } from "../../types/device.model";
 import { Ranking } from "../../services/devices/ranking.service";
 import { getDeviceImageUrl } from "../../services/devices/device.service";
+import { DeviceCollectionService } from "../../services/devices/device-collection.service";
+import { useAuth } from "../../contexts/AuthContext";
+import { useFavoritedDeviceIds } from "../../hooks/useFavoritedDeviceIds";
 import { colors } from "../../theme/colors";
 import { SpecSummary } from "../specifications/SpecSummary";
 
@@ -25,7 +28,49 @@ export function DeviceComparisonResult(
   { device, ranking }: DeviceComparisonResultProps,
 ) {
   const router = useRouter();
+  const { user, authenticated } = useAuth();
+  const { favoritedDeviceIds, refetch } = useFavoritedDeviceIds();
+  const [togglingFavorite, setTogglingFavorite] = useState(false);
+  const [optimisticFavorited, setOptimisticFavorited] = useState<
+    boolean | null
+  >(
+    null,
+  );
+
+  const deviceCollectionService = DeviceCollectionService.getInstance();
   const imageUrl = getDeviceImageUrl(device);
+
+  const isFavorited = optimisticFavorited ?? favoritedDeviceIds.has(device.id);
+
+  const handleToggleFavorite = useCallback(async () => {
+    if (!user?.id || togglingFavorite) return;
+    const currentFavorited = optimisticFavorited ??
+      favoritedDeviceIds.has(device.id);
+    const nextFavorited = !currentFavorited;
+    setOptimisticFavorited(nextFavorited);
+    setTogglingFavorite(true);
+    try {
+      if (currentFavorited) {
+        await deviceCollectionService.removeFavorite(user.id, device.id);
+      } else {
+        await deviceCollectionService.addFavorite(user.id, device.id);
+      }
+      await refetch();
+      setOptimisticFavorited(null);
+    } catch (err) {
+      console.error("Error toggling favorite:", err);
+      setOptimisticFavorited(currentFavorited);
+    } finally {
+      setTogglingFavorite(false);
+    }
+  }, [
+    user?.id,
+    device.id,
+    togglingFavorite,
+    optimisticFavorited,
+    favoritedDeviceIds,
+    refetch,
+  ]);
 
   const getRankingClass = (categoryName: keyof Ranking): string => {
     const categoryRanking = ranking[categoryName];
@@ -77,6 +122,30 @@ export function DeviceComparisonResult(
               resizeMode="contain"
               p={2}
             />
+            {authenticated && (
+              <Box position="absolute" top={3} right={3} zIndex={1}>
+                <Pressable
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    handleToggleFavorite();
+                  }}
+                  disabled={togglingFavorite}
+                  hitSlop={8}
+                  p={2}
+                  borderRadius="full"
+                  bg={colors.backgroundCard}
+                  borderWidth={1}
+                  borderColor={colors.border}
+                  _pressed={{ opacity: 0.8 }}
+                >
+                  <Ionicons
+                    name={isFavorited ? "heart" : "heart-outline"}
+                    size={24}
+                    color={colors.favorite}
+                  />
+                </Pressable>
+              </Box>
+            )}
           </Box>
         </Pressable>
 

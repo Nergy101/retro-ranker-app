@@ -6,7 +6,6 @@ import {
   Button,
   Center,
   HStack,
-  Image,
   Input,
   Pressable,
   ScrollView,
@@ -35,6 +34,7 @@ import { Pagination } from "../../components/shared/Pagination";
 import { TagComponent } from "../../components/shared/TagComponent";
 import { RateLimitError } from "../../components/errors/RateLimitError";
 import { colors } from "../../theme/colors";
+import RrLogoSvg from "../../assets/logos/retro-ranker/rr-logo.svg";
 import { getErrorMessage, getRateLimitInfo } from "../../utils/error-utils";
 import { ClientResponseError } from "pocketbase";
 import {
@@ -291,6 +291,7 @@ export default function SearchPage() {
             "year-2026",
             "upcoming",
             "oled",
+            "micro",
             "personal-pick",
             "anbernic",
             "miyoo-bittboy",
@@ -299,10 +300,9 @@ export default function SearchPage() {
             "clamshell",
             "horizontal",
             "vertical",
-            "micro",
           ];
           const popularTagsFiltered = (tags ?? []).filter((tag) =>
-            popularTagSlugs.includes(tag.slug),
+            popularTagSlugs.includes(tag.slug)
           );
           setPopularTags(popularTagsFiltered);
         }
@@ -551,6 +551,25 @@ export default function SearchPage() {
       <Box flex={1} bg={colors.background}>
         <ScrollView>
           <VStack space={2} p={4} pt={Math.max(insets.top, 16)}>
+            {/* Header */}
+            <Box
+              pb={3}
+              mb={2}
+              borderBottomWidth={1}
+              borderBottomColor={colors.primary}
+            >
+              <HStack space={2} alignItems="center">
+                <RrLogoSvg width={48} height={48} />
+                <Text
+                  fontSize="lg"
+                  fontWeight="bold"
+                  color={colors.textPrimary}
+                >
+                  Search {totalResults.toLocaleString()} Devices
+                </Text>
+              </HStack>
+            </Box>
+
             {/* Search Bar */}
             <Box mb={2}>
               <Box
@@ -622,7 +641,12 @@ export default function SearchPage() {
                 >
                   Popular Searches
                 </Text>
-                <HStack space={1.5} flexWrap="wrap">
+                <Box
+                  flexDirection="row"
+                  flexWrap="wrap"
+                  style={{ gap: 5 }}
+                  alignItems="center"
+                >
                   {popularTags.map((tag) => (
                     <TagComponent
                       key={tag.id}
@@ -631,7 +655,7 @@ export default function SearchPage() {
                       isSelected={selectedTags.some((t) => t.id === tag.id)}
                     />
                   ))}
-                </HStack>
+                </Box>
               </Box>
             )}
 
@@ -922,7 +946,8 @@ export default function SearchPage() {
             {/* Results Count */}
             <Box>
               <Text fontSize="sm" color={colors.textSecondary}>
-                {totalResults} device{totalResults !== 1 ? "s" : ""} found
+                Found {totalResults} device{totalResults !== 1 ? "s" : ""}{" "}
+                matching your criteria
               </Text>
               {isCached && (
                 <Text fontSize="xs" color={colors.textTertiary} mt={0.5}>

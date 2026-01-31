@@ -25,10 +25,17 @@ interface DeviceCardProps {
   onPress?: () => void;
   imageOnly?: boolean;
   isFavorited?: boolean;
+  onToggleFavorite?: () => void;
 }
 
 export function DeviceCard(
-  { device, onPress, imageOnly = false, isFavorited = false }: DeviceCardProps,
+  {
+    device,
+    onPress,
+    imageOnly = false,
+    isFavorited = false,
+    onToggleFavorite,
+  }: DeviceCardProps,
 ) {
   const { authenticated } = useAuth();
   const imageUrl = getDeviceImageUrl(device);
@@ -96,7 +103,7 @@ export function DeviceCard(
         bg={colors.backgroundCard}
         borderRadius="md"
         borderWidth={1}
-        borderColor={colors.border}
+        borderColor={colors.primary}
         overflow="hidden"
         height="100%"
       >
@@ -118,7 +125,7 @@ export function DeviceCard(
         bg={colors.backgroundCard}
         borderRadius="md"
         borderWidth={1}
-        borderColor={colors.border}
+        borderColor={isFavorited ? colors.favorite : colors.primary}
         overflow="hidden"
         height="100%"
       >
@@ -206,11 +213,30 @@ export function DeviceCard(
             </Box>
             {authenticated && (
               <Box position="absolute" top={2} right={2} zIndex={1}>
-                <Ionicons
-                  name={isFavorited ? "heart" : "heart-outline"}
-                  size={20}
-                  color={isFavorited ? colors.primary : colors.textSecondary}
-                />
+                {onToggleFavorite
+                  ? (
+                    <Pressable
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        onToggleFavorite();
+                      }}
+                      hitSlop={8}
+                      p={1}
+                    >
+                      <Ionicons
+                        name={isFavorited ? "heart" : "heart-outline"}
+                        size={20}
+                        color={colors.favorite}
+                      />
+                    </Pressable>
+                  )
+                  : (
+                    <Ionicons
+                      name={isFavorited ? "heart" : "heart-outline"}
+                      size={20}
+                      color={colors.favorite}
+                    />
+                  )}
               </Box>
             )}
           </Box>

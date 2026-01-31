@@ -4,7 +4,6 @@ import {
   Box,
   Center,
   HStack,
-  Image,
   Pressable,
   ScrollView,
   Spinner,
@@ -12,7 +11,7 @@ import {
   VStack,
 } from "native-base";
 import React, { useEffect, useState } from "react";
-import { Dimensions, StyleSheet, View } from "react-native";
+import { Dimensions, Image, Linking, StyleSheet, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { DeviceCard } from "../../components/cards/DeviceCard";
@@ -21,6 +20,7 @@ import { useNetwork } from "../../contexts/NetworkContext";
 import { useFavoritedDeviceIds } from "../../hooks/useFavoritedDeviceIds";
 import { DeviceService } from "../../services/devices/device.service";
 import { colors } from "../../theme/colors";
+import RrLogoSvg from "../../assets/logos/retro-ranker/rr-logo.svg";
 import { Device } from "../../types/device.model";
 import { getErrorMessage, getRateLimitInfo } from "../../utils/error-utils";
 
@@ -218,7 +218,7 @@ export default function HomePage() {
             bg={colors.backgroundCard}
             borderRadius="md"
             borderWidth={1}
-            borderColor={colors.border}
+            borderColor={colors.primary}
             py={3}
             px={4}
             mt={3}
@@ -243,41 +243,47 @@ export default function HomePage() {
     <GestureDetector gesture={swipeGesture}>
       <Box flex={1} bg={colors.background}>
         <ScrollView>
-          <VStack space={4} pt={Math.max(insets.top, 16)}>
-            {/* Version - top right, scrolls with content */}
-            <Box px={4} alignItems="flex-end">
-              <Text fontSize="xs" color={colors.textSecondary}>
-                v{appVersion}
-              </Text>
-            </Box>
-            {/* Logo Section */}
-            <Box mb={1} px={4}>
-              <HStack space={2} alignItems="center" justifyContent="center">
-                <Image
-                  source={require("../../assets/logos/retro-ranker/rr-logo.png")}
-                  alt="Retro Ranker Logo"
-                  width={16}
-                  height={16}
-                  resizeMode="contain"
-                />
-                <Text
-                  fontSize="md"
-                  fontWeight="bold"
-                  color={colors.primary}
-                >
-                  Retro Ranker
-                </Text>
-              </HStack>
-              {isCached && (
-                <Text
-                  fontSize="xs"
-                  color={colors.textTertiary}
-                  textAlign="center"
-                  mt={1}
-                >
-                  Last updated when online
-                </Text>
-              )}
+          <VStack space={2} pt={Math.max(insets.top, 16)}>
+            {/* Logo Section - structure matches search page, padding only here */}
+            <Box px={4}>
+              <Box
+                pb={3}
+                mb={2}
+                borderBottomWidth={1}
+                borderBottomColor={colors.primary}
+              >
+                <Box position="relative">
+                  <HStack space={2} alignItems="center">
+                    <RrLogoSvg width={48} height={48} />
+                    <Text
+                      fontSize="lg"
+                      fontWeight="bold"
+                      color={colors.textPrimary}
+                    >
+                      Retro Ranker
+                    </Text>
+                  </HStack>
+                  <Text
+                    fontSize="xs"
+                    color={colors.textSecondary}
+                    position="absolute"
+                    right={0}
+                    top={0}
+                  >
+                    v{appVersion}
+                  </Text>
+                </Box>
+                {isCached && (
+                  <Text
+                    fontSize="xs"
+                    color={colors.textTertiary}
+                    textAlign="center"
+                    mt={1}
+                  >
+                    Last updated when online
+                  </Text>
+                )}
+              </Box>
             </Box>
 
             {/* New Arrivals Section */}
@@ -324,6 +330,25 @@ export default function HomePage() {
               },
             )}
 
+            {/* Made with ❤️ by Nergy */}
+            <Center py={8} px={4}>
+              <Pressable
+                onPress={() => Linking.openURL("https://nergy.space")}
+                hitSlop={8}
+              >
+                <VStack alignItems="center" space={2}>
+                  <Text fontSize="sm" color={colors.textSecondary}>
+                    Made with ❤️ by Nergy
+                  </Text>
+                  <Image
+                    source={require("../../assets/logos/nergy/nergy-n.png")}
+                    style={styles.nergyLogo}
+                    resizeMode="contain"
+                  />
+                </VStack>
+              </Pressable>
+            </Center>
+
             {/* Bottom spacing */}
             <Box h={20} />
           </VStack>
@@ -341,5 +366,9 @@ const styles = StyleSheet.create({
   },
   cardWrapper: {
     height: 280,
+  },
+  nergyLogo: {
+    width: 56,
+    height: 56,
   },
 });

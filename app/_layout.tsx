@@ -45,6 +45,15 @@ export default function RootLayout() {
                     }}
                   />
                   <Stack.Screen
+                    name="compare-results"
+                    options={{
+                      title: "Comparison",
+                      headerBackTitle: "Back",
+                      headerStyle: { backgroundColor: "#1a1a1a" },
+                      headerTintColor: "#FF6B35",
+                    }}
+                  />
+                  <Stack.Screen
                     name="collections/[id]"
                     options={{
                       title: "Collection",

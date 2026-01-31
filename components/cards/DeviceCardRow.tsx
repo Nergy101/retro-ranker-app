@@ -60,7 +60,7 @@ export function DeviceCardRow({
       bg={colors.backgroundCard}
       borderRadius="md"
       borderWidth={1}
-      borderColor={colors.border}
+      borderColor={isFavorited ? colors.favorite : colors.primary}
       overflow="hidden"
       mb={2}
     >

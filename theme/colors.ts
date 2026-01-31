@@ -4,11 +4,11 @@
  */
 
 export const colors = {
-  // Primary orange colors
-  primary: "#c6752f",
-  primaryHover: "#b0682a",
-  primaryFocus: "rgba(198, 117, 47, 0.2)",
-  primaryBackground: "#c6752f",
+  // Primary orange colors (matches retro-ranker web app #ff9500)
+  primary: "#ff9500",
+  primaryHover: "#e68600",
+  primaryFocus: "rgba(255, 149, 0, 0.2)",
+  primaryBackground: "#ff9500",
   primaryContrast: "#FFFFFF",
 
   // Dark backgrounds
@@ -24,6 +24,9 @@ export const colors = {
   // Borders and dividers
   border: "#404040",
   borderLight: "#505050",
+
+  // Accent: coral for favorites (pairs with primary orange, pops on dark)
+  favorite: "#d06060",
 
   // Status colors
   success: "#16833E",

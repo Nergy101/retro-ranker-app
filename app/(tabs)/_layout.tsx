@@ -11,7 +11,8 @@ export default function TabLayout() {
         tabBarInactiveTintColor: colors.textTertiary,
         tabBarStyle: {
           backgroundColor: colors.backgroundCard,
-          borderTopColor: colors.border,
+          borderTopWidth: 1,
+          borderTopColor: colors.primary,
         },
       }}
     >
@@ -58,6 +59,20 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="charts"
+        options={{
+          title: "Charts",
+          tabBarIcon: ({ color, size, focused }) => (
+            <TabBarIcon
+              name="charts"
+              color={color}
+              size={size}
+              focused={focused}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
@@ -85,7 +100,7 @@ export default function TabLayout() {
 // Simple icon component - can be replaced with react-native-vector-icons later
 function TabBarIcon(
   { name, color, size, focused }: {
-    name: "home" | "search" | "compare" | "profile";
+    name: "home" | "search" | "compare" | "charts" | "profile";
     color: string;
     size: number;
     focused: boolean;
@@ -98,6 +113,7 @@ function TabBarIcon(
     home: "home",
     search: "search",
     compare: "git-pull-request",
+    charts: "bar-chart-2",
     profile: "user",
   };
 

@@ -31,7 +31,7 @@ import { SpecSummary } from "../../components/specifications/SpecSummary";
 import { FullSpecs } from "../../components/specifications/FullSpecs";
 import { RateLimitError } from "../../components/errors/RateLimitError";
 import { colors } from "../../theme/colors";
-import { getRateLimitInfo, getErrorMessage } from "../../utils/error-utils";
+import { getErrorMessage, getRateLimitInfo } from "../../utils/error-utils";
 
 const styles = StyleSheet.create({
   gridContainer: {
@@ -56,9 +56,11 @@ export default function DeviceDetailPage() {
   const [similarDevices, setSimilarDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [rateLimitError, setRateLimitError] = useState<{
-    retryAfterMinutes: number;
-  } | null>(null);
+  const [rateLimitError, setRateLimitError] = useState<
+    {
+      retryAfterMinutes: number;
+    } | null
+  >(null);
   const [isCached, setIsCached] = useState(false);
   const [togglingFavorite, setTogglingFavorite] = useState(false);
   // Optimistic: flip heart immediately on tap; null = use server state
@@ -71,8 +73,8 @@ export default function DeviceDetailPage() {
 
   const handleToggleFavorite = useCallback(async () => {
     if (!device || !user?.id || togglingFavorite) return;
-    const currentFavorited =
-      optimisticFavorited ?? favoritedDeviceIds.has(device.id);
+    const currentFavorited = optimisticFavorited ??
+      favoritedDeviceIds.has(device.id);
     const nextFavorited = !currentFavorited;
     setOptimisticFavorited(nextFavorited);
     setTogglingFavorite(true);
@@ -99,8 +101,8 @@ export default function DeviceDetailPage() {
     refetch,
   ]);
 
-  const isFavoritedDisplay =
-    optimisticFavorited ?? (device ? favoritedDeviceIds.has(device.id) : false);
+  const isFavoritedDisplay = optimisticFavorited ??
+    (device ? favoritedDeviceIds.has(device.id) : false);
 
   // Update navigation title and header heart when device is loaded
   useEffect(() => {
@@ -118,9 +120,7 @@ export default function DeviceDetailPage() {
               <Ionicons
                 name={isFavoritedDisplay ? "heart" : "heart-outline"}
                 size={24}
-                color={
-                  isFavoritedDisplay ? colors.primary : colors.textSecondary
-                }
+                color={colors.favorite}
               />
             </Pressable>
           ),
@@ -164,7 +164,9 @@ export default function DeviceDetailPage() {
           setRateLimitError(null);
           setError(null);
         } else {
-          setError("Device not found. Connect to the internet to load this device.");
+          setError(
+            "Device not found. Connect to the internet to load this device.",
+          );
         }
         setLoading(false);
         return;
@@ -187,7 +189,9 @@ export default function DeviceDetailPage() {
     } catch (err) {
       const rateLimitInfo = getRateLimitInfo(err);
       if (rateLimitInfo) {
-        setRateLimitError({ retryAfterMinutes: rateLimitInfo.retryAfterMinutes });
+        setRateLimitError({
+          retryAfterMinutes: rateLimitInfo.retryAfterMinutes,
+        });
         setError(null);
       } else {
         setError(getErrorMessage(err));

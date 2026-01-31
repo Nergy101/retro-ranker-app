@@ -13,7 +13,13 @@ import {
   VStack,
 } from "native-base";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Modal, TextInput, TouchableWithoutFeedback, View } from "react-native";
+import {
+  InteractionManager,
+  Modal,
+  TextInput,
+  TouchableWithoutFeedback,
+  View,
+} from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AchievementBoard } from "../../components/achievements/AchievementBoard";
@@ -132,10 +138,14 @@ export default function ProfilePage() {
     loadCollections();
   }, [loadAchievements, loadFavorites, loadCollections]);
 
-  // When not authenticated and auth is settled, redirect to sign-in (no intermediate screen)
+  // When not authenticated and auth is settled, redirect to sign-in (no intermediate screen).
+  // Defer navigation so it runs after the sign-out state update, avoiding NavigationContainer corruption.
   useEffect(() => {
     if (!loading && !authenticated) {
-      router.replace("/(tabs)/sign-in");
+      const task = InteractionManager.runAfterInteractions(() => {
+        router.replace("/(tabs)/sign-in");
+      });
+      return () => task.cancel();
     }
   }, [loading, authenticated, router]);
 
@@ -250,7 +260,7 @@ export default function ProfilePage() {
                 >
                   <HStack justifyContent="space-between" alignItems="center">
                     <HStack alignItems="center" space={2}>
-                      <Feather name="heart" size={20} color={colors.primary} />
+                      <Feather name="heart" size={20} color={colors.favorite} />
                       <Text
                         color={colors.textPrimary}
                         fontSize="lg"
@@ -659,7 +669,7 @@ export default function ProfilePage() {
             <Button
               onPress={() => {
                 signOut();
-                router.replace("/(tabs)/profile");
+                // Redirect to sign-in is handled by useEffect when authenticated becomes false
               }}
               bg={colors.error}
               _pressed={{ bg: "#8a0a0a", opacity: 0.95 }}

@@ -31,7 +31,7 @@ export function SeeMoreCard({
         bg={colors.backgroundCard}
         borderRadius="md"
         borderWidth={1}
-        borderColor={colors.border}
+        borderColor={colors.primary}
         flex={1}
         justifyContent="center"
         alignItems="center"
