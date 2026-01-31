@@ -4,6 +4,7 @@
  */
 export interface OAuthCreateData {
   name?: string;
+  nickname?: string;
   avatar?: string;
   [key: string]: string | number | boolean | null | undefined;
 }

@@ -26,7 +26,9 @@ export class AuthService {
   }
 
   /**
-   * Sign in with OAuth2 code
+   * Sign in with OAuth2 code.
+   * If the provider (e.g. Google) does not return a nickname, derives one from
+   * the OAuth name or the part before "@" of the email and updates the user.
    */
   async signInWithOAuth(
     provider: "google" | "discord",
@@ -43,6 +45,22 @@ export class AuthService {
         redirectUrl,
         createData,
       );
+
+      const nickname = result?.record?.nickname;
+      if (!nickname || String(nickname).trim() === "") {
+        const email = result?.record?.email ?? "";
+        const nameFromOAuth = result?.meta?.name;
+        const name =
+          nameFromOAuth?.trim() ||
+          (email ? email.split("@")[0] : "user");
+        const cleanNickname = name.toLowerCase().replace(/\s+/g, "_");
+        await this.pb.update("users", result.record.id, {
+          nickname: cleanNickname,
+        });
+        await this.pb.authRefresh();
+        return { ...result, record: this.pb.getCurrentUser() };
+      }
+
       return result;
     } catch (error) {
       console.error("OAuth sign in error:", error);
