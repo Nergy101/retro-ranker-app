@@ -19,7 +19,7 @@ export function OfflineBanner() {
       bg={colors.warning}
       py={2}
       px={4}
-      style={{ paddingTop: Math.max(insets.top, 8) + 8 }}
+      style={{ paddingTop: Math.max(insets.top, 4) + 4 }}
     >
       <Text color={colors.background} fontSize="sm" fontWeight="medium">
         You're offline. Showing cached content.

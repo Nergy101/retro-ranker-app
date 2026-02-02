@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Feather } from "@expo/vector-icons";
 import { Box, Button, HStack, Pressable, Text, VStack } from "native-base";
 import { TextInput } from "react-native";
 import { Device } from "../../types/device.model";
@@ -7,21 +8,36 @@ import { colors } from "../../theme/colors";
 
 interface ComparisonFormProps {
   onCompare: (deviceA: Device, deviceB: Device) => void;
+  /** Pre-fill device A (e.g. when navigating from device detail "Compare" button). */
+  initialDeviceA?: Device | null;
 }
 
-export function ComparisonForm({ onCompare }: ComparisonFormProps) {
-  const [queryA, setQueryA] = useState("");
+export function ComparisonForm({
+  onCompare,
+  initialDeviceA = null,
+}: ComparisonFormProps) {
+  const [queryA, setQueryA] = useState(
+    initialDeviceA ? `${initialDeviceA.brand.raw} ${initialDeviceA.name.raw}` : "",
+  );
   const [queryB, setQueryB] = useState("");
   const [suggestionsA, setSuggestionsA] = useState<Device[]>([]);
   const [suggestionsB, setSuggestionsB] = useState<Device[]>([]);
   const [showSuggestionsA, setShowSuggestionsA] = useState(false);
   const [showSuggestionsB, setShowSuggestionsB] = useState(false);
-  const [deviceA, setDeviceA] = useState<Device | null>(null);
+  const [deviceA, setDeviceA] = useState<Device | null>(initialDeviceA ?? null);
   const [deviceB, setDeviceB] = useState<Device | null>(null);
   const [isFocusedA, setIsFocusedA] = useState(false);
   const [isFocusedB, setIsFocusedB] = useState(false);
 
   const deviceService = DeviceService.getInstance();
+
+  // Apply initialDeviceA when it becomes available (e.g. after compare page fetches it)
+  useEffect(() => {
+    if (initialDeviceA) {
+      setDeviceA(initialDeviceA);
+      setQueryA(`${initialDeviceA.brand.raw} ${initialDeviceA.name.raw}`);
+    }
+  }, [initialDeviceA]);
 
   useEffect(() => {
     const searchDevices = async () => {
@@ -92,15 +108,6 @@ export function ComparisonForm({ onCompare }: ComparisonFormProps) {
   return (
     <Box bg={colors.backgroundCard} p={4} borderRadius="md" mb={4}>
       <VStack space={3}>
-        <Text
-          fontSize="lg"
-          fontWeight="bold"
-          color={colors.textPrimary}
-          textAlign="center"
-        >
-          Compare Devices
-        </Text>
-
         {/* Device A Input */}
         <Box>
           <Text fontSize="sm" color={colors.textSecondary} mb={2}>
@@ -240,6 +247,13 @@ export function ComparisonForm({ onCompare }: ComparisonFormProps) {
           size="md"
           isDisabled={!deviceA || !deviceB}
           _pressed={{ bg: colors.primaryHover }}
+          leftIcon={
+            <Feather
+              name="git-pull-request"
+              size={18}
+              color={colors.primaryContrast}
+            />
+          }
         >
           <Text color={colors.primaryContrast}>Compare</Text>
         </Button>

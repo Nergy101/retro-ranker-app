@@ -35,7 +35,7 @@ export function DeviceCardRow({
       const { min, max } = device.pricing.range;
       if (min === max) {
         return (
-          <HStack alignItems="center" space={1}>
+          <HStack alignItems="center" space={0}>
             <Feather name="dollar-sign" size={14} color={colors.primary} />
             <Text fontSize="sm" color={colors.primary} fontWeight="bold">
               {min}
@@ -44,7 +44,7 @@ export function DeviceCardRow({
         );
       }
       return (
-        <HStack alignItems="center" space={1}>
+        <HStack alignItems="center" space={0}>
           <Feather name="dollar-sign" size={14} color={colors.primary} />
           <Text fontSize="sm" color={colors.primary} fontWeight="bold">
             {min} - {max}

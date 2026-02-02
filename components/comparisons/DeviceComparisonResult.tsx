@@ -152,35 +152,80 @@ export function DeviceComparisonResult(
         {/* Device Info Section */}
         <Box p={4} bg={colors.backgroundCard}>
           <VStack space={2}>
-            <Text
-              fontSize="xl"
-              fontWeight="bold"
-              color={colors.textPrimary}
-              numberOfLines={1}
-              isTruncated
-            >
-              {device.name.raw}
+            <HStack space={2} alignItems="baseline" flexWrap="wrap">
+              <Text
+                fontSize="xl"
+                fontWeight="bold"
+                color={colors.textPrimary}
+                numberOfLines={1}
+                isTruncated
+              >
+                {device.name.raw}
+              </Text>
+              <Text
+                fontSize="sm"
+                color={colors.textSecondary}
+                numberOfLines={1}
+                isTruncated
+              >
+                {device.brand.raw}
+              </Text>
+            </HStack>
+            <Text fontSize="sm" color={colors.textSecondary} mt={1}>
+              RetroRanker score: {device.totalRating}/10
+              {device.pricing.average != null &&
+                device.totalRating > 0 && (
+                  <>
+                    {" – "}
+                    {`$${(
+                      Number(device.pricing.average) / device.totalRating
+                    ).toFixed(0)}`}
+                    {" per point"}
+                  </>
+                )}
             </Text>
-            <Text
-              fontSize="sm"
-              color={colors.textSecondary}
-              numberOfLines={1}
-              isTruncated
+            <HStack
+              alignItems="center"
+              justifyContent="space-between"
+              mt={1}
+              flexWrap="wrap"
             >
-              {device.brand.raw}
-            </Text>
-            {device.pricing.average && (
-              <HStack alignItems="center" space={1} mt={1}>
-                <Feather name="dollar-sign" size={16} color={colors.primary} />
+              {device.pricing.average
+                ? (
+                  <HStack alignItems="center" space={0}>
+                    <Feather
+                      name="dollar-sign"
+                      size={16}
+                      color={colors.primary}
+                    />
+                    <Text
+                      fontSize="md"
+                      color={colors.primary}
+                      fontWeight="semibold"
+                    >
+                      {device.pricing.average}
+                    </Text>
+                  </HStack>
+                )
+                : <Box flex={1} />}
+              <Pressable
+                onPress={() =>
+                  router.push(`/devices/${device.name.sanitized}`)}
+                borderWidth={1}
+                borderColor={colors.primary}
+                borderRadius="md"
+                px={3}
+                py={1.5}
+              >
                 <Text
-                  fontSize="md"
+                  fontSize="xs"
                   color={colors.primary}
-                  fontWeight="semibold"
+                  fontWeight="medium"
                 >
-                  {device.pricing.average}
+                  Details
                 </Text>
-              </HStack>
-            )}
+              </Pressable>
+            </HStack>
           </VStack>
         </Box>
 

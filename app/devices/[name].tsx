@@ -13,7 +13,7 @@ import {
 } from "native-base";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import { Dimensions, StyleSheet, View } from "react-native";
+import { Dimensions, Share, StyleSheet, View } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNetwork } from "../../contexts/NetworkContext";
@@ -31,6 +31,7 @@ import { SpecSummary } from "../../components/specifications/SpecSummary";
 import { FullSpecs } from "../../components/specifications/FullSpecs";
 import { RateLimitError } from "../../components/errors/RateLimitError";
 import { colors } from "../../theme/colors";
+import { API_BASE_URL } from "../../utils/constants";
 import { getErrorMessage, getRateLimitInfo } from "../../utils/error-utils";
 
 const styles = StyleSheet.create({
@@ -104,27 +105,53 @@ export default function DeviceDetailPage() {
   const isFavoritedDisplay = optimisticFavorited ??
     (device ? favoritedDeviceIds.has(device.id) : false);
 
-  // Update navigation title and header heart when device is loaded
+  const handleShare = useCallback(() => {
+    if (!device) return;
+    const url = `${API_BASE_URL}/devices/${device.name.sanitized}`;
+    Share.share({
+      message: url,
+      url,
+      title: `${device.brand.raw} ${device.name.raw}`,
+    }).catch(() => {});
+  }, [device]);
+
+  const handleCompare = useCallback(() => {
+    if (!device) return;
+    router.push({
+      pathname: "/(tabs)/compare",
+      params: { deviceA: device.name.sanitized },
+    });
+  }, [device, router]);
+
+  // Update navigation title and header buttons when device is loaded
   useEffect(() => {
     if (device) {
       navigation.setOptions({
-        title: `${device.brand.raw} ${device.name.raw}`,
-        ...(authenticated && {
-          headerRight: () => (
-            <Pressable
-              onPress={handleToggleFavorite}
-              disabled={togglingFavorite}
-              hitSlop={8}
-              p={2}
-            >
-              <Ionicons
-                name={isFavoritedDisplay ? "heart" : "heart-outline"}
-                size={24}
-                color={colors.favorite}
-              />
+        title: device.name.raw,
+        headerRight: () => (
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <Pressable onPress={handleCompare} hitSlop={8} p={2}>
+              <Feather name="git-pull-request" size={22} color={colors.primary} />
             </Pressable>
-          ),
-        }),
+            {authenticated && (
+              <Pressable
+                onPress={handleToggleFavorite}
+                disabled={togglingFavorite}
+                hitSlop={8}
+                p={2}
+              >
+                <Ionicons
+                  name={isFavoritedDisplay ? "heart" : "heart-outline"}
+                  size={24}
+                  color={colors.favorite}
+                />
+              </Pressable>
+            )}
+            <Pressable onPress={handleShare} hitSlop={8} p={2}>
+              <Feather name="share" size={22} color={colors.textPrimary} />
+            </Pressable>
+          </View>
+        ),
       });
     }
   }, [
@@ -134,6 +161,8 @@ export default function DeviceDetailPage() {
     isFavoritedDisplay,
     togglingFavorite,
     handleToggleFavorite,
+    handleShare,
+    handleCompare,
   ]);
 
   // Calculate card width for 2-column grid with gaps (same as home page)
@@ -258,16 +287,32 @@ export default function DeviceDetailPage() {
 
           {/* Device Name and Brand */}
           <VStack space={2}>
-            <Text fontSize="3xl" fontWeight="bold" color={colors.textPrimary}>
-              {device.brand.raw} {device.name.raw}
-            </Text>
+            <HStack space={2} alignItems="baseline" flexWrap="wrap">
+              <Text
+                fontSize="3xl"
+                fontWeight="bold"
+                color={colors.textPrimary}
+                numberOfLines={1}
+                isTruncated
+              >
+                {device.name.raw}
+              </Text>
+              <Text
+                fontSize="sm"
+                color={colors.textSecondary}
+                numberOfLines={1}
+                isTruncated
+              >
+                {device.brand.raw}
+              </Text>
+            </HStack>
             {isCached && (
               <Text fontSize="xs" color={colors.textTertiary}>
                 Last updated when online
               </Text>
             )}
             {device.pricing.average && (
-              <HStack alignItems="center" space={1}>
+              <HStack alignItems="center" space={0}>
                 <Feather name="dollar-sign" size={18} color={colors.primary} />
                 <Text
                   fontSize="lg"

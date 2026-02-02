@@ -34,7 +34,6 @@ import { Pagination } from "../../components/shared/Pagination";
 import { TagComponent } from "../../components/shared/TagComponent";
 import { RateLimitError } from "../../components/errors/RateLimitError";
 import { colors } from "../../theme/colors";
-import RrLogoSvg from "../../assets/logos/retro-ranker/rr-logo.svg";
 import { getErrorMessage, getRateLimitInfo } from "../../utils/error-utils";
 import { ClientResponseError } from "pocketbase";
 import {
@@ -175,12 +174,17 @@ export default function SearchPage() {
     }
   }, [params.category]);
 
+  // Resolve tag by id or slug (device detail may pass either)
+  const findTagByIdOrSlug = (tagId: string) =>
+    allTags.find((t) => t.id === tagId) ||
+    allTags.find((t) => t.slug === tagId);
+
   // Handle tagId when allTags loads (check both params and AsyncStorage)
   useEffect(() => {
     // Handle tagId as string or array (Expo Router can return either)
     const tagId = Array.isArray(params.tagId) ? params.tagId[0] : params.tagId;
     if (tagId && allTags.length > 0) {
-      const tag = allTags.find((t) => t.id === tagId);
+      const tag = findTagByIdOrSlug(tagId);
       if (tag) {
         // Always set the tag when tagId param is present (replace any existing selections)
         setSelectedTags([tag]);
@@ -229,7 +233,7 @@ export default function SearchPage() {
         ? params.tagId[0]
         : params.tagId;
       if (tagId && allTags.length > 0) {
-        const tag = allTags.find((t) => t.id === tagId);
+        const tag = findTagByIdOrSlug(tagId);
         if (tag) {
           // Always set the tag when tagId param is present (replace any existing selections)
           setSelectedTags([tag]);
@@ -327,12 +331,13 @@ export default function SearchPage() {
 
       setAllTags(tags);
 
-      // Handle tagId query parameter after tags are loaded
+      // Handle tagId query parameter after tags are loaded (match by id or slug)
       const tagId = Array.isArray(params.tagId)
         ? params.tagId[0]
         : params.tagId;
       if (tagId) {
-        const tag = tags.find((t) => t.id === tagId);
+        const tag =
+          tags.find((t) => t.id === tagId) || tags.find((t) => t.slug === tagId);
         if (tag) {
           setSelectedTags([tag]);
           setPageNumber(1);
@@ -550,26 +555,7 @@ export default function SearchPage() {
     <GestureDetector gesture={swipeGesture}>
       <Box flex={1} bg={colors.background}>
         <ScrollView>
-          <VStack space={2} p={4} pt={Math.max(insets.top, 16)}>
-            {/* Header */}
-            <Box
-              pb={3}
-              mb={2}
-              borderBottomWidth={1}
-              borderBottomColor={colors.primary}
-            >
-              <HStack space={2} alignItems="center">
-                <RrLogoSvg width={48} height={48} />
-                <Text
-                  fontSize="lg"
-                  fontWeight="bold"
-                  color={colors.textPrimary}
-                >
-                  Search {totalResults.toLocaleString()} Devices
-                </Text>
-              </HStack>
-            </Box>
-
+          <VStack space={2} p={4} pt={8}>
             {/* Search Bar */}
             <Box mb={2}>
               <Box

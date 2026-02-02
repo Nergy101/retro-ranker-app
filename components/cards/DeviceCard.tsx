@@ -26,6 +26,9 @@ interface DeviceCardProps {
   imageOnly?: boolean;
   isFavorited?: boolean;
   onToggleFavorite?: () => void;
+  /** When true, show a "Details" button that calls onDetailsPress (e.g. on comparison cards). */
+  showDetailsButton?: boolean;
+  onDetailsPress?: () => void;
 }
 
 export function DeviceCard(
@@ -35,6 +38,8 @@ export function DeviceCard(
     imageOnly = false,
     isFavorited = false,
     onToggleFavorite,
+    showDetailsButton = false,
+    onDetailsPress,
   }: DeviceCardProps,
 ) {
   const { authenticated } = useAuth();
@@ -50,7 +55,7 @@ export function DeviceCard(
       const { min, max } = device.pricing.range;
       if (min === max) {
         return (
-          <HStack alignItems="center" space={1}>
+          <HStack alignItems="center" space={0}>
             <Feather name="dollar-sign" size={12} color={colors.primary} />
             <Text fontSize="xs" color={colors.primary} fontWeight="bold">
               {min}
@@ -59,7 +64,7 @@ export function DeviceCard(
         );
       }
       return (
-        <HStack alignItems="center" space={1}>
+        <HStack alignItems="center" space={0}>
           <Feather name="dollar-sign" size={12} color={colors.primary} />
           <Text fontSize="xs" color={colors.primary} fontWeight="bold">
             {min} - {max}
@@ -259,6 +264,25 @@ export function DeviceCard(
             >
               {device.brand.raw}
             </Text>
+            {showDetailsButton && onDetailsPress && (
+              <HStack justifyContent="flex-end" mt={2}>
+                <Pressable
+                  onPress={(e) => {
+                    e?.stopPropagation?.();
+                    onDetailsPress();
+                  }}
+                  borderWidth={1}
+                  borderColor={colors.primary}
+                  borderRadius="md"
+                  px={3}
+                  py={1.5}
+                >
+                  <Text fontSize="xs" color={colors.primary} fontWeight="medium">
+                    Details
+                  </Text>
+                </Pressable>
+              </HStack>
+            )}
           </VStack>
         </VStack>
       </Box>

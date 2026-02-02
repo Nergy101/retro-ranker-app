@@ -4,21 +4,25 @@ import Svg, { Path } from "react-native-svg";
 import { Box, HStack, Text, VStack } from "native-base";
 import { Device } from "../../types/device.model";
 import { colors } from "../../theme/colors";
+import { getChartColorSetByKey } from "../../utils/chartColors";
 
 interface OSDistributionChartProps {
   devices: Device[];
 }
 
-const OS_COLORS: Record<string, string> = {
-  Android: "#3DDC84",
-  Linux: "#FCC624",
-  Windows: "#0078D4",
-  "Custom Firmware": "#FF6B6B",
-  Unknown: "#95A5A6",
+const OS_COLORS: Record<string, { base: string; dark: string }> = {
+  Android: { base: "#3DDC84", dark: "#2eb86b" },   // Android green
+  Linux: { base: "#FCC624", dark: "#d4a01e" },     // Nice yellow
+  Windows: { base: "#0078D4", dark: "#0063a5" },   // Windows blue
+  "Custom Firmware": { base: "#9B59B6", dark: "#7D3C98" },  // Nice purple
+  "Unknown & other": { base: "#E74C3C", dark: "#c0392b" },   // Nice red
 };
 
-function getOSColor(os: string): string {
-  return OS_COLORS[os] ?? `hsl(${os.length * 37 % 360}, 70%, 50%)`;
+function getOSColor(os: string, index: number): { base: string; dark: string } {
+  const fixed = OS_COLORS[os];
+  if (fixed) return fixed;
+  const set = getChartColorSetByKey(os, index);
+  return { base: set.base, dark: set.dark };
 }
 
 function categorizeOS(device: Device): string {
@@ -86,7 +90,7 @@ function polarToCartesian(
   };
 }
 
-const PIE_SIZE = 180;
+const PIE_SIZE = 220;
 const PIE_R = PIE_SIZE / 2 - 8;
 
 export function OSDistributionChart({ devices }: OSDistributionChartProps) {
@@ -109,25 +113,23 @@ export function OSDistributionChart({ devices }: OSDistributionChartProps) {
       .filter(([, count]) => count <= unknownCount)
       .reduce((sum, [, count]) => sum + count, 0);
 
-    const parts: { os: string; count: number; color: string }[] = [
-      ...major.map(([os, count]) => ({
-        os,
-        count,
-        color: getOSColor(os),
-      })),
+    const parts: { os: string; count: number; color: string; colorDark: string }[] = [
+      ...major.map(([os, count], i) => {
+        const { base, dark } = getOSColor(os, i);
+        return { os, count, color: base, colorDark: dark };
+      }),
       ...(otherCount > 0
-        ? [
-            {
-              os: "Unknown & other",
-              count: otherCount,
-              color: OS_COLORS["Unknown"],
-            },
-          ]
+        ? (() => {
+            const { base, dark } = getOSColor("Unknown & other", major.length);
+            return [
+              { os: "Unknown & other", count: otherCount, color: base, colorDark: dark },
+            ];
+          })()
         : []),
     ];
 
     let startAngle = 0;
-    return parts.map(({ os, count, color }) => {
+    return parts.map(({ os, count, color, colorDark }) => {
       const pct = (count / total) * 100;
       const angleSpan = (count / total) * 360;
       const endAngle = startAngle + angleSpan;
@@ -136,6 +138,7 @@ export function OSDistributionChart({ devices }: OSDistributionChartProps) {
         count,
         pct,
         color,
+        colorDark,
         startAngle,
         endAngle,
       };
@@ -165,12 +168,12 @@ export function OSDistributionChart({ devices }: OSDistributionChartProps) {
     <Box p={2}>
       <View style={{ alignSelf: "center" }}>
         <Svg width={PIE_SIZE} height={PIE_SIZE} viewBox={`0 0 ${PIE_SIZE} ${PIE_SIZE}`}>
-          {segments.map((seg, i) => (
+          {segments.map((seg) => (
             <Path
               key={seg.os}
               d={describeArc(cx, cy, PIE_R, seg.startAngle, seg.endAngle)}
               fill={seg.color}
-              stroke={colors.backgroundCard}
+              stroke={seg.colorDark}
               strokeWidth={2}
             />
           ))}

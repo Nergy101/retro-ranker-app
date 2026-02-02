@@ -81,7 +81,7 @@ export default function OAuthCallbackScreen() {
         processingRef.current = "done";
         setError("Missing OAuth parameters");
         setStatus("Redirecting...");
-        setPendingRedirect("/(tabs)/sign-in");
+        setPendingRedirect("/(tabs)/profile");
         return;
       }
 
@@ -111,11 +111,11 @@ export default function OAuthCallbackScreen() {
         if (!codeVerifier) {
           // Session expired - redirect gracefully without error banner
           console.log(
-            "[OAuth Callback] Session expired, redirecting to sign-in",
+            "[OAuth Callback] Session expired, redirecting to profile",
           );
           processingRef.current = "done";
           setStatus("Session expired. Redirecting...");
-          setPendingRedirect("/(tabs)/sign-in");
+          setPendingRedirect("/(tabs)/profile");
           return;
         }
 
@@ -141,7 +141,7 @@ export default function OAuthCallbackScreen() {
           : "OAuth failed";
         setError(errorMessage);
         setStatus("Login failed");
-        setPendingRedirect("/(tabs)/sign-in");
+        setPendingRedirect("/(tabs)/profile");
       }
     };
 

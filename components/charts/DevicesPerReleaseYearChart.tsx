@@ -4,9 +4,12 @@ import Svg, { Circle, Line, Path, Text as SvgText } from "react-native-svg";
 import { Box, Text } from "native-base";
 import { Device } from "../../types/device.model";
 import { colors } from "../../theme/colors";
+import { getChartColor } from "../../utils/chartColors";
 
 interface DevicesPerReleaseYearChartProps {
   devices: Device[];
+  fromYear: number;
+  toYear: number;
 }
 
 const CHART_HEIGHT = 220;
@@ -18,16 +21,16 @@ const GRID_COUNT = 4;
 
 export function DevicesPerReleaseYearChart({
   devices,
+  fromYear,
+  toYear,
 }: DevicesPerReleaseYearChartProps) {
-  const MIN_YEAR = 2017;
-
   const { years, counts } = useMemo(() => {
     const yearSet = new Set<number>();
     for (const d of devices) {
       const date = d.released?.mentionedDate;
       if (date) {
         const year = new Date(date).getFullYear();
-        if (!Number.isNaN(year) && year >= MIN_YEAR) yearSet.add(year);
+        if (!Number.isNaN(year) && year >= fromYear && year <= toYear) yearSet.add(year);
       }
     }
     const years = Array.from(yearSet).sort((a, b) => a - b);
@@ -39,7 +42,7 @@ export function DevicesPerReleaseYearChart({
       }).length;
     });
     return { years, counts };
-  }, [devices]);
+  }, [devices, fromYear, toYear]);
 
   const chartWidth = Dimensions.get("window").width - 32;
   const plotWidth = chartWidth - PAD_LEFT - PAD_RIGHT;
@@ -71,10 +74,7 @@ export function DevicesPerReleaseYearChart({
     if (points.length === 1) return `M ${points[0].x},${points[0].y}`;
     return points.reduce((path, point, i) => {
       if (i === 0) return `M ${point.x},${point.y}`;
-      const prev = points[i - 1];
-      const c1x = prev.x + (point.x - prev.x) / 3;
-      const c2x = prev.x + (2 * (point.x - prev.x)) / 3;
-      return `${path} C ${c1x},${prev.y} ${c2x},${point.y} ${point.x},${point.y}`;
+      return `${path} L ${point.x},${point.y}`;
     }, "");
   }, [points]);
 
@@ -133,7 +133,7 @@ export function DevicesPerReleaseYearChart({
         <Path
           d={linePath}
           fill="none"
-          stroke={colors.primary}
+          stroke={getChartColor(0)}
           strokeWidth={2}
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -146,7 +146,7 @@ export function DevicesPerReleaseYearChart({
             cy={point.y}
             r={4}
             fill={colors.backgroundCard}
-            stroke={colors.primary}
+            stroke={getChartColor(0)}
             strokeWidth={2}
           />
         ))}

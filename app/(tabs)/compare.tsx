@@ -11,7 +11,7 @@ import {
 } from "native-base";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { colors } from "../../theme/colors";
 import { Device } from "../../types/device.model";
 import { DeviceService } from "../../services/devices/device.service";
@@ -29,6 +29,11 @@ interface ExampleComparison {
 
 const exampleComparisons: ExampleComparison[] = [
   {
+    deviceA: "retroid-pocket-6",
+    deviceB: "odin-3",
+    label: "Retroid Pocket 6 vs Odin 3",
+  },
+  {
     deviceA: "steam-deck-oled",
     deviceB: "switch-2",
     label: "Steam Deck OLED vs Switch 2",
@@ -39,17 +44,24 @@ const exampleComparisons: ExampleComparison[] = [
     deviceB: "thor",
     label: "Retroid Pocket Flip 2 vs Thor",
   },
+  {
+    deviceA: "rg-ds",
+    deviceB: "miyoo-mini-flip",
+    label: "RG DS vs Miyoo Mini Flip",
+  },
 ];
 
 export default function ComparePage() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const params = useLocalSearchParams<{ deviceA?: string }>();
   const { user, authenticated } = useAuth();
   const { favoritedDeviceIds, refetch } = useFavoritedDeviceIds();
   const [exampleDevices, setExampleDevices] = useState<
     { [key: string]: Device }
   >({});
   const [loadingExamples, setLoadingExamples] = useState(true);
+  const [initialDeviceA, setInitialDeviceA] = useState<Device | null>(null);
 
   const deviceCollectionService = DeviceCollectionService.getInstance();
   const deviceService = DeviceService.getInstance();
@@ -66,6 +78,25 @@ export default function ComparePage() {
         router.push("/(tabs)/profile");
       }
     });
+
+  // When deviceA param is present (e.g. from device detail "Compare" button), fetch that device
+  useEffect(() => {
+    const slug = Array.isArray(params.deviceA) ? params.deviceA[0] : params.deviceA;
+    if (!slug) {
+      setInitialDeviceA(null);
+      return;
+    }
+    let cancelled = false;
+    deviceService.getDeviceByName(slug).then((d) => {
+      if (!cancelled && d) setInitialDeviceA(d);
+      else if (!cancelled) setInitialDeviceA(null);
+    }).catch(() => {
+      if (!cancelled) setInitialDeviceA(null);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [params.deviceA]);
 
   useEffect(() => {
     loadExampleDevices();
@@ -140,15 +171,11 @@ export default function ComparePage() {
     <GestureDetector gesture={swipeGesture}>
       <Box flex={1} bg={colors.background}>
         <ScrollView>
-          <VStack space={4} p={4} pt={Math.max(insets.top, 16)}>
-            <Text
-              fontSize="2xl"
-              fontWeight="bold"
-              color={colors.textPrimary}
-              mb={2}
-            >
-              Device Comparison
-            </Text>
+          <VStack space={4} p={4} pt={8}>
+            <ComparisonForm
+              onCompare={handleCompare}
+              initialDeviceA={initialDeviceA}
+            />
 
             {/* Example Comparisons */}
             <Box mb={4}>
@@ -240,15 +267,6 @@ export default function ComparePage() {
                     </VStack>
                   </>
                 )}
-            </Box>
-
-            <ComparisonForm onCompare={handleCompare} />
-
-            <Box bg={colors.backgroundCard} p={4} borderRadius="md">
-              <Text color={colors.textSecondary} textAlign="center">
-                Select two devices above to compare their specifications
-                side-by-side.
-              </Text>
             </Box>
           </VStack>
         </ScrollView>

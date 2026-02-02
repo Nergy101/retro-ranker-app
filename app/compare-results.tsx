@@ -9,15 +9,19 @@ import {
   Text,
   VStack,
 } from "native-base";
-import { useLocalSearchParams } from "expo-router";
+import { Feather } from "@expo/vector-icons";
+import { useLocalSearchParams, useNavigation } from "expo-router";
+import { Share, View } from "react-native";
 import { Device } from "../types/device.model";
 import { Ranking, RankingService } from "../services/devices/ranking.service";
 import { DeviceService } from "../services/devices/device.service";
 import { DeviceComparisonResult } from "../components/comparisons/DeviceComparisonResult";
 import { colors } from "../theme/colors";
+import { API_BASE_URL } from "../utils/constants";
 
 export default function CompareResultsPage() {
   const params = useLocalSearchParams<{ deviceA: string; deviceB: string }>();
+  const navigation = useNavigation();
   const deviceA = params.deviceA ?? "";
   const deviceB = params.deviceB ?? "";
 
@@ -73,6 +77,33 @@ export default function CompareResultsPage() {
   useEffect(() => {
     loadAndCompare();
   }, [loadAndCompare]);
+
+  const handleShare = useCallback(() => {
+    const url = `${API_BASE_URL}/compare?devices=${deviceA},${deviceB}`;
+    Share.share({
+      message: url,
+      url,
+      title: `${deviceA} vs ${deviceB}`,
+    }).catch(() => {});
+  }, [deviceA, deviceB]);
+
+  useEffect(() => {
+    if (devices.length === 2) {
+      const a = devices[0];
+      const b = devices[1];
+      const title = `${a.name.raw} VS. ${b.name.raw}`;
+      navigation.setOptions({
+        title,
+        headerRight: () => (
+          <View style={{ paddingRight: 8 }}>
+            <Pressable onPress={handleShare} hitSlop={8} p={2}>
+              <Feather name="share" size={22} color={colors.textPrimary} />
+            </Pressable>
+          </View>
+        ),
+      });
+    }
+  }, [devices, navigation, handleShare]);
 
   if (loading) {
     return (

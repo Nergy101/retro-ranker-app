@@ -4,9 +4,13 @@ import Svg, { Circle, Line, Path, Text as SvgText } from "react-native-svg";
 import { Box, HStack, Text } from "native-base";
 import { Device } from "../../types/device.model";
 import { colors } from "../../theme/colors";
+import { getChartColorByKey } from "../../utils/chartColors";
 
 interface DevicesPerBrandPerYearChartProps {
   devices: Device[];
+  fromYear: number;
+  toYear: number;
+  minDevicesPerBrand: number;
 }
 
 const CHART_HEIGHT = 220;
@@ -15,30 +19,9 @@ const PAD_RIGHT = 28;
 const PAD_TOP = 16;
 const PAD_BOTTOM = 28;
 const GRID_COUNT = 4;
-const MIN_YEAR = 2020;
-const MIN_DEVICES_PER_BRAND = 10;
-
-// One blue, one pink; no purples or light blues
-const BRAND_PALETTE = [
-  "#ff9500", // orange (primary)
-  "#e11d48", // red
-  "#eab308", // yellow
-  "#84cc16", // lime
-  "#22c55e", // green
-  "#10b981", // emerald
-  "#2563eb", // blue
-  "#ec4899", // pink
-  "#f59e0b", // amber
-  "#ea580c", // dark orange
-];
 
 function getBrandColor(brandKey: string, index: number): string {
-  let hash = 0;
-  for (let i = 0; i < brandKey.length; i++) {
-    hash = brandKey.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const paletteIndex = Math.abs(hash) % BRAND_PALETTE.length;
-  return BRAND_PALETTE[paletteIndex] ?? BRAND_PALETTE[index % BRAND_PALETTE.length];
+  return getChartColorByKey(brandKey, index);
 }
 
 function pointsToPath(points: { x: number; y: number }[]): string {
@@ -46,15 +29,15 @@ function pointsToPath(points: { x: number; y: number }[]): string {
   if (points.length === 1) return `M ${points[0].x},${points[0].y}`;
   return points.reduce((path, point, i) => {
     if (i === 0) return `M ${point.x},${point.y}`;
-    const prev = points[i - 1];
-    const c1x = prev.x + (point.x - prev.x) / 3;
-    const c2x = prev.x + (2 * (point.x - prev.x)) / 3;
-    return `${path} C ${c1x},${prev.y} ${c2x},${point.y} ${point.x},${point.y}`;
+    return `${path} L ${point.x},${point.y}`;
   }, "");
 }
 
 export function DevicesPerBrandPerYearChart({
   devices,
+  fromYear,
+  toYear,
+  minDevicesPerBrand,
 }: DevicesPerBrandPerYearChartProps) {
   const chartWidth = Dimensions.get("window").width - 32;
   const plotWidth = chartWidth - PAD_LEFT - PAD_RIGHT;
@@ -66,7 +49,7 @@ export function DevicesPerBrandPerYearChart({
       const date = d.released?.mentionedDate;
       if (date) {
         const year = new Date(date).getFullYear();
-        if (!Number.isNaN(year) && year >= MIN_YEAR) yearSet.add(year);
+        if (!Number.isNaN(year) && year >= fromYear && year <= toYear) yearSet.add(year);
       }
     }
     const years = Array.from(yearSet).sort((a, b) => a - b);
@@ -87,7 +70,7 @@ export function DevicesPerBrandPerYearChart({
       brandCounts[brand] = (brandCounts[brand] ?? 0) + 1;
     }
     const brandsWithEnough = Object.entries(brandCounts)
-      .filter(([, count]) => count >= MIN_DEVICES_PER_BRAND)
+      .filter(([, count]) => count >= minDevicesPerBrand)
       .sort(([, a], [, b]) => b - a)
       .map(([brand]) => brand);
 
@@ -143,7 +126,7 @@ export function DevicesPerBrandPerYearChart({
       minVal,
       yTicks,
     };
-  }, [devices, plotWidth, plotHeight]);
+  }, [devices, fromYear, toYear, minDevicesPerBrand, plotWidth, plotHeight]);
 
   if (years.length === 0 || series.length === 0) {
     return (
@@ -156,8 +139,8 @@ export function DevicesPerBrandPerYearChart({
       >
         <Text color={colors.textTertiary}>
           {years.length === 0
-            ? "No data from 2020 onward"
-            : "No brands with ≥10 devices in this range"}
+            ? `No data from ${fromYear} to ${toYear}`
+            : `No brands with ≥${minDevicesPerBrand} devices in this range`}
         </Text>
       </Box>
     );

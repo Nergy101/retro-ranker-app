@@ -43,13 +43,20 @@ export function SpecSummary({ device }: SpecSummaryProps) {
     {
       label: "Display",
       value: device.screen
-        ? `${device.screen.size || "Unknown"}" ${
-          device.screen.resolution && device.screen.resolution.length > 0
-            ? device.screen.resolution.map((res) =>
-              `${res.width}x${res.height}`
-            ).join(", ")
-            : "Unknown"
-        } (${device.screen.type?.type || "Unknown"})`
+        ? (() => {
+            const hasRes =
+              device.screen.resolution && device.screen.resolution.length > 0;
+            const sizeStr =
+              device.screen.size != null ? `${device.screen.size}"` : "";
+            const typeStr = device.screen.type?.type || "Unknown";
+            if (hasRes) {
+              const resStr = device.screen.resolution!
+                .map((r) => `${r.width}x${r.height}`)
+                .join(", ");
+              return `${sizeStr} ${resStr} (${typeStr})`.trim();
+            }
+            return `${sizeStr} ${typeStr}`.trim() || "Unknown";
+          })()
         : "Unknown",
     },
     {

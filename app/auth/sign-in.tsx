@@ -192,7 +192,7 @@ export default function SignInScreen() {
         flex={1}
         space={6}
         p={6}
-        pt={Math.max(insets.top, 16)}
+        pt={8}
         justifyContent="center"
         alignItems="center"
       >

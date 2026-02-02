@@ -1,8 +1,14 @@
 import { Tabs } from "expo-router";
 import { Feather } from "@expo/vector-icons";
+import { Image } from "react-native";
+import { useAuth } from "../../contexts/AuthContext";
 import { colors } from "../../theme/colors";
 
+const DICEBEAR_PROFILE_URL = "https://api.dicebear.com/9.x/bottts-neutral/png";
+
 export default function TabLayout() {
+  const { authenticated, user } = useAuth();
+
   return (
     <Tabs
       screenOptions={{
@@ -76,21 +82,28 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ color, size, focused }) => (
-            <TabBarIcon
-              name="profile"
-              color={color}
-              size={size}
-              focused={focused}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="sign-in"
-        options={{
-          href: null, // Hide from tab bar
-          title: "Sign In",
+          tabBarIcon: ({ color, size, focused }) =>
+            authenticated && user
+              ? (
+                <Image
+                  source={{
+                    uri: `${DICEBEAR_PROFILE_URL}?seed=${encodeURIComponent(user.nickname ?? user.id)}&backgroundType=solid,gradientLinear`,
+                  }}
+                  style={{
+                    width: size,
+                    height: size,
+                    borderRadius: size / 2,
+                  }}
+                />
+              )
+              : (
+                <TabBarIcon
+                  name="profile"
+                  color={color}
+                  size={size}
+                  focused={focused}
+                />
+              ),
         }}
       />
     </Tabs>

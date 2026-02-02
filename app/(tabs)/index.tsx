@@ -243,7 +243,7 @@ export default function HomePage() {
     <GestureDetector gesture={swipeGesture}>
       <Box flex={1} bg={colors.background}>
         <ScrollView>
-          <VStack space={2} pt={Math.max(insets.top, 16)}>
+          <VStack space={2} pt={8}>
             {/* Logo Section - structure matches search page, padding only here */}
             <Box px={4}>
               <Box
