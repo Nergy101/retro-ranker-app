@@ -2,9 +2,9 @@
   "expo": {
     "name": "Retro Ranker",
     "slug": "retro-ranker-app",
-    "version": "1.0.6",
+    "version": "1.0.7",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/icons/icon.png",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "scheme": "retroranker",
@@ -15,6 +15,7 @@
       "backgroundColor": "#1a1a1a"
     },
     "ios": {
+      "icon": "./assets/icons/ios-icon.png",
       "supportsTablet": true,
       "bundleIdentifier": "com.retroranker.app",
       "infoPlist": {
@@ -24,7 +25,7 @@
     "android": {
       "package": "com.retroranker.app",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/icons/android-icon.png",
         "backgroundColor": "#1a1a1a"
       },
       "edgeToEdgeEnabled": true,

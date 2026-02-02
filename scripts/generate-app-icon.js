@@ -1,8 +1,14 @@
 /**
- * Generates app icon PNGs from rr-logo.svg (Expo requires PNG for iOS/Android).
+ * Generates platform-specific app icon PNGs from rr-logo.svg.
  * Run: npm run generate:icons
  *
- * Output: assets/icon.png and assets/adaptive-icon.png (1024×1024)
+ * icon.png is kept as-is (do not overwrite). Use it as the default icon in app.json.
+ * Outputs go to assets/icons/.
+ *
+ * - ios-icon.png (iOS only): Logo scaled to fill 1024×1024 (height 1024, pad to square),
+ *   dark #1a1a1a background. Linked via app.json ios.icon.
+ * - android-icon.png (Android only): Logo at 50% of canvas, transparent padding,
+ *   so it fits inside the circular launcher mask. Linked via app.json android.adaptiveIcon.
  */
 
 const { promises: fs } = require("fs");
@@ -11,61 +17,79 @@ const { Resvg } = require("@resvg/resvg-js");
 const sharp = require("sharp");
 
 const ROOT = path.resolve(__dirname, "..");
+const ICONS_DIR = path.join(ROOT, "assets", "icons");
 const SVG_PATH = path.join(ROOT, "assets/logos/retro-ranker/rr-logo.svg");
 const ICON_SIZE = 1024;
-const OUTPUTS = [
-  path.join(ROOT, "assets/icon.png"),
-  path.join(ROOT, "assets/adaptive-icon.png"),
-];
+/** Android: scale logo to 50% so it fits inside the circular mask */
+const ANDROID_ICON_HEIGHT = Math.round(ICON_SIZE * 0.5);
+const DARK_BG = { r: 26, g: 26, b: 26 }; // #1a1a1a
 
-async function main() {
+async function renderSvgAtHeight(height) {
   const svg = await fs.readFile(SVG_PATH);
-
-  // SVG viewBox is ~646×784. Scale to height 1024 so logo fills vertically;
-  // then pad left/right to get 1024×1024 (Expo requirement).
   const resvg = new Resvg(svg, {
-    fitTo: { mode: "height", value: ICON_SIZE },
+    fitTo: { mode: "height", value: height },
   });
   const pngData = resvg.render();
-  const pngBuffer = pngData.asPng();
+  return Buffer.from(pngData.asPng());
+}
 
-  const meta = await sharp(pngBuffer).metadata();
-  const { width, height } = meta;
-  if (width === ICON_SIZE && height === ICON_SIZE) {
-    // Already square
-    for (const outPath of OUTPUTS) {
-      await fs.writeFile(outPath, pngBuffer);
-      console.log("Wrote", path.relative(ROOT, outPath));
-    }
-    return;
-  }
+/** Pad to size×size with background, or crop center size×size if larger */
+function toSquare(buffer, size, background) {
+  return sharp(buffer)
+    .metadata()
+    .then((meta) => {
+      const { width, height } = meta;
+      if (width === size && height === size) {
+        return sharp(buffer);
+      }
+      if (width <= size && height <= size) {
+        const left = Math.floor((size - width) / 2);
+        const top = Math.floor((size - height) / 2);
+        return sharp(buffer).extend({
+          left,
+          top,
+          right: size - width - left,
+          bottom: size - height - top,
+          background,
+        });
+      }
+      const x = Math.floor((width - size) / 2);
+      const y = Math.floor((height - size) / 2);
+      return sharp(buffer).extract({ left: x, top: y, width: size, height: size });
+    })
+    .then((p) => p.png().toBuffer());
+}
 
-  // Pad or crop to 1024×1024
-  let pipeline = sharp(pngBuffer);
-  if (width < ICON_SIZE || height < ICON_SIZE) {
-    const left = Math.floor((ICON_SIZE - width) / 2);
-    const top = Math.floor((ICON_SIZE - height) / 2);
-    pipeline = pipeline.extend({
-      left,
-      top,
-      right: ICON_SIZE - width - left,
-      bottom: ICON_SIZE - height - top,
-      background: { r: 0, g: 0, b: 0, alpha: 0 },
-    });
-  } else {
-    pipeline = pipeline.resize(ICON_SIZE, ICON_SIZE, {
-      fit: "cover",
-      position: "center",
-    });
-  }
+async function main() {
+  await fs.mkdir(ICONS_DIR, { recursive: true });
 
-  const finalBuffer = await pipeline.png().toBuffer();
+  // --- iOS only: ios-icon.png — logo fills icon (height 1024, pad to square with dark bg)
+  const iosPng = await renderSvgAtHeight(ICON_SIZE);
+  const iosIconPath = path.join(ICONS_DIR, "ios-icon.png");
+  const iosIconBuffer = await toSquare(iosPng, ICON_SIZE, {
+    ...DARK_BG,
+    alpha: 1,
+  });
+  await fs.writeFile(iosIconPath, iosIconBuffer);
+  console.log("Wrote", path.relative(ROOT, iosIconPath), "(iOS only, full height, dark bg)");
 
-  for (const outPath of OUTPUTS) {
-    await fs.writeFile(outPath, finalBuffer);
-    console.log("Wrote", path.relative(ROOT, outPath));
-  }
-  console.log("Done. Icon source: assets/logos/retro-ranker/rr-logo.svg");
+  // --- Android only: android-icon.png — 50% scale, transparent, for circular mask
+  const androidPng = await renderSvgAtHeight(ANDROID_ICON_HEIGHT);
+  const androidPath = path.join(ICONS_DIR, "android-icon.png");
+  const androidBuffer = await toSquare(androidPng, ICON_SIZE, {
+    r: 0,
+    g: 0,
+    b: 0,
+    alpha: 0,
+  });
+  await fs.writeFile(androidPath, androidBuffer);
+  console.log(
+    "Wrote",
+    path.relative(ROOT, androidPath),
+    "(Android only, 50% scale, transparent)",
+  );
+
+  console.log("Done. icon.png unchanged. iOS uses ios-icon.png, Android uses android-icon.png.");
 }
 
 main().catch((err) => {
