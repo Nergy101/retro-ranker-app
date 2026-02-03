@@ -15,6 +15,7 @@ import { DeviceCollectionService } from "../../services/devices/device-collectio
 import { DeviceCollection } from "../../types/device-collection";
 import { DeviceCard } from "../../components/cards/DeviceCard";
 import { colors } from "../../theme/colors";
+import { SAFE_AREA_TOP_PADDING_MIN } from "../../utils/constants";
 import { useAuth } from "../../contexts/AuthContext";
 import { useFavoritedDeviceIds } from "../../hooks/useFavoritedDeviceIds";
 
@@ -108,7 +109,7 @@ export default function CollectionDetailPage() {
         <VStack
           space={4}
           p={6}
-          pt={4}
+          style={{ paddingTop: Math.max(insets.top, SAFE_AREA_TOP_PADDING_MIN) }}
         >
           {/* Header */}
           <VStack space={2}>

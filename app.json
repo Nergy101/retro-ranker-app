@@ -2,7 +2,7 @@
   "expo": {
     "name": "Retro Ranker",
     "slug": "retro-ranker-app",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "orientation": "portrait",
     "icon": "./assets/icons/icon.png",
     "userInterfaceStyle": "dark",

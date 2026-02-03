@@ -42,7 +42,7 @@ import {
 import pkceSessionService from "../../services/auth/pkce.service";
 import { createPocketBaseService } from "../../services/pocketbase/pocketbase.service";
 import { colors } from "../../theme/colors";
-import { API_BASE_URL } from "../../utils/constants";
+import { API_BASE_URL, SAFE_AREA_TOP_PADDING_MIN } from "../../utils/constants";
 import { AchievementStatus } from "../../types/achievement.contract";
 import { DeviceCollection } from "../../types/device-collection";
 import { Device } from "../../types/device.model";
@@ -344,7 +344,7 @@ export default function ProfilePage() {
             flexGrow: 1,
             justifyContent: "center",
             padding: 24,
-            paddingTop: 8,
+            paddingTop: Math.max(insets.top, SAFE_AREA_TOP_PADDING_MIN),
             paddingBottom: Math.max(insets.bottom, 24),
             alignItems: "center",
           }}
@@ -505,7 +505,7 @@ export default function ProfilePage() {
           <VStack
             space={4}
             p={6}
-            pt={8}
+            style={{ paddingTop: Math.max(insets.top, SAFE_AREA_TOP_PADDING_MIN) }}
             pb={Math.max(insets.bottom, 24)}
           >
             <VStack space={2}>

@@ -20,6 +20,7 @@ import { useNetwork } from "../../contexts/NetworkContext";
 import { useFavoritedDeviceIds } from "../../hooks/useFavoritedDeviceIds";
 import { DeviceService } from "../../services/devices/device.service";
 import { colors } from "../../theme/colors";
+import { SAFE_AREA_TOP_PADDING_MIN } from "../../utils/constants";
 import RrLogoSvg from "../../assets/logos/retro-ranker/rr-logo.svg";
 import { Device } from "../../types/device.model";
 import { getErrorMessage, getRateLimitInfo } from "../../utils/error-utils";
@@ -243,7 +244,10 @@ export default function HomePage() {
     <GestureDetector gesture={swipeGesture}>
       <Box flex={1} bg={colors.background}>
         <ScrollView>
-          <VStack space={2} pt={8}>
+          <VStack
+            space={2}
+            style={{ paddingTop: Math.max(insets.top, SAFE_AREA_TOP_PADDING_MIN) }}
+          >
             {/* Logo Section - structure matches search page, padding only here */}
             <Box px={4}>
               <Box

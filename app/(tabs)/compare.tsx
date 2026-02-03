@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { colors } from "../../theme/colors";
+import { SAFE_AREA_TOP_PADDING_MIN } from "../../utils/constants";
 import { Device } from "../../types/device.model";
 import { DeviceService } from "../../services/devices/device.service";
 import { DeviceCollectionService } from "../../services/devices/device-collection.service";
@@ -171,7 +172,11 @@ export default function ComparePage() {
     <GestureDetector gesture={swipeGesture}>
       <Box flex={1} bg={colors.background}>
         <ScrollView>
-          <VStack space={4} p={4} pt={8}>
+          <VStack
+            space={4}
+            p={4}
+            style={{ paddingTop: Math.max(insets.top, SAFE_AREA_TOP_PADDING_MIN) }}
+          >
             <ComparisonForm
               onCompare={handleCompare}
               initialDeviceA={initialDeviceA}

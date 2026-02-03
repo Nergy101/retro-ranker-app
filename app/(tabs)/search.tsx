@@ -34,6 +34,7 @@ import { Pagination } from "../../components/shared/Pagination";
 import { TagComponent } from "../../components/shared/TagComponent";
 import { RateLimitError } from "../../components/errors/RateLimitError";
 import { colors } from "../../theme/colors";
+import { SAFE_AREA_TOP_PADDING_MIN } from "../../utils/constants";
 import { getErrorMessage, getRateLimitInfo } from "../../utils/error-utils";
 import { ClientResponseError } from "pocketbase";
 import {
@@ -555,7 +556,11 @@ export default function SearchPage() {
     <GestureDetector gesture={swipeGesture}>
       <Box flex={1} bg={colors.background}>
         <ScrollView>
-          <VStack space={2} p={4} pt={8}>
+          <VStack
+            space={2}
+            p={4}
+            style={{ paddingTop: Math.max(insets.top, SAFE_AREA_TOP_PADDING_MIN) }}
+          >
             {/* Search Bar */}
             <Box mb={2}>
               <Box

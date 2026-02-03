@@ -11,14 +11,21 @@
     },
     "preview": {
       "distribution": "internal",
-      "channel": "preview"
+      "channel": "preview",
+      "ios": {
+        "simulator": true
+      }
     },
     "production": {
       "autoIncrement": true,
-      "channel": "production"
+      "channel": "production",
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "android": {
+        "releaseStatus": "draft"
+      }
+    }
   }
 }

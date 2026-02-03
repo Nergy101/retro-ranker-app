@@ -17,6 +17,7 @@ import { OSDistributionChart } from "../../components/charts/OSDistributionChart
 import { useNetwork } from "../../contexts/NetworkContext";
 import { DeviceService } from "../../services/devices/device.service";
 import { colors } from "../../theme/colors";
+import { SAFE_AREA_TOP_PADDING_MIN } from "../../utils/constants";
 import { Device } from "../../types/device.model";
 import { getErrorMessage } from "../../utils/error-utils";
 
@@ -94,7 +95,11 @@ export default function ChartsPage() {
 
   if (loading && devices.length === 0) {
     return (
-      <Box flex={1} bg={colors.background} pt={8}>
+      <Box
+        flex={1}
+        bg={colors.background}
+        style={{ paddingTop: Math.max(insets.top, SAFE_AREA_TOP_PADDING_MIN) }}
+      >
         <Center flex={1}>
           <Spinner size="lg" color={colors.primary} />
           <Text color={colors.textSecondary} mt={4}>
@@ -106,7 +111,11 @@ export default function ChartsPage() {
   }
 
   return (
-    <Box flex={1} bg={colors.background} pt={8}>
+    <Box
+      flex={1}
+      bg={colors.background}
+      style={{ paddingTop: Math.max(insets.top, SAFE_AREA_TOP_PADDING_MIN) }}
+    >
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: 16,
